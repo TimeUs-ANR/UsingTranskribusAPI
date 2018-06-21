@@ -1,5 +1,6 @@
 import requests
 import json
+import os
 import xml.etree.ElementTree as ET
 
 from secrets import username, password
@@ -8,6 +9,16 @@ COLLECTIONNAME = 'timeUS'
 
 
 # ============================= #
+
+def createFolder(directory):
+	try:
+		if not os.path.exists(directory):
+			os.makedirs(directory)
+	except OSError:
+		print('Creating new directory. ' + directory)
+	return
+
+# ----------------------------- #
 
 def getsessionid():
 	"""Uses Transkribus API login tools and returns a session code as a string
@@ -69,12 +80,37 @@ def getdocumentid(sessionid, collectionid):
 
 	return doclist
 
+def getdocumentpage(sessionid, collectionid, documentid, dirname):
+	"""
+	"""
+	url = "https://transkribus.eu/TrpServer/rest/collections/" + str(collectionid) + "/" + str(documentid) + "/fulldoc"
+	querystring = {"JSESSIONID":sessionid}
+	response = requests.request("GET", url, params=querystring)
+	json_file = json.loads(response.text)
+
+	metadata = json_file["md"]
+	documenttitle = metadata["title"]
+	dirname = dirname + "/" + documenttitle
+	print("Creating new folder in data/" + COLLECTIONNAME + "/ for document " + documenttitle)
+	createFolder(dirname)
+	return
+
+
+
 # ============================= #
 
 sessionid = getsessionid()
 collectionid = getcollectionid(sessionid)
 if collectionid:
 	listofdocumentid = getdocumentid(sessionid, collectionid)
+
+	dirname = os.path.dirname(os.path.abspath(__file__))
+	dirname = dirname + "/data/" + COLLECTIONNAME
+	print("Creating new folder in data/ for " + COLLECTIONNAME + " collection.")
+	createFolder(dirname)
+
+	for documentid in listofdocumentid:
+		getdocumentpage(sessionid, collectionid, documentid, dirname)
 
 
 
