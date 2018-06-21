@@ -83,20 +83,12 @@ def getdocumentid(sessionid, collectionid):
 
 	return doclist
 
-def getdocumentpage(sessionid, collectionid, documentid, dirname):
+def getmetadata(data, dirname):
 	"""
 	"""
-	url = "https://transkribus.eu/TrpServer/rest/collections/" + str(collectionid) + "/" + str(documentid) + "/fulldoc"
-	querystring = {"JSESSIONID":sessionid}
-	response = requests.request("GET", url, params=querystring)
-	json_file = json.loads(response.text)
-
-	metadata = json_file["md"]
-
+	metadata = data["md"]
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
-
-
 	dirname = dirname + "/" + documenttitle
 	print("Creating new folder in data/" + COLLECTIONNAME + "/ for document " + documenttitle)
 	createFolder(dirname)
@@ -105,6 +97,22 @@ def getdocumentpage(sessionid, collectionid, documentid, dirname):
 	with open (path, 'w') as file:
 		text = json.dumps(metadata)
 		file.write(text)
+	return dirname, metadata
+
+def getdocumentpage(sessionid, collectionid, documentid, dirname):
+	"""
+	"""
+	url = "https://transkribus.eu/TrpServer/rest/collections/" + str(collectionid) + "/" + str(documentid) + "/fulldoc"
+	querystring = {"JSESSIONID":sessionid}
+	response = requests.request("GET", url, params=querystring)
+	json_file = json.loads(response.text)
+
+	# Get metadata and create metadata file
+	dirname, metadata = getmetadata(json_file, dirname)
+	
+	# ----------------------------------------------------------------------------------------------------- HERE
+	# ADD CREATION OF XML FILES FOR EACH PAGE	
+
 	return
 
 
