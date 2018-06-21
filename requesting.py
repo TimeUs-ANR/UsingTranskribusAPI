@@ -11,6 +11,9 @@ COLLECTIONNAME = 'timeUS'
 # ============================= #
 
 def createFolder(directory):
+	"""Creates a new folder
+	source : https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
+	"""
 	try:
 		if not os.path.exists(directory):
 			os.makedirs(directory)
@@ -89,10 +92,19 @@ def getdocumentpage(sessionid, collectionid, documentid, dirname):
 	json_file = json.loads(response.text)
 
 	metadata = json_file["md"]
+
 	documenttitle = metadata["title"]
+	documenttitle = documenttitle.replace("/", "-")
+
+
 	dirname = dirname + "/" + documenttitle
 	print("Creating new folder in data/" + COLLECTIONNAME + "/ for document " + documenttitle)
 	createFolder(dirname)
+
+	path = dirname + "/metadata.json"
+	with open (path, 'w') as file:
+		text = json.dumps(metadata)
+		file.write(text)
 	return
 
 
