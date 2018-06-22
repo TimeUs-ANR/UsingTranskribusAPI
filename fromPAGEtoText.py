@@ -14,32 +14,62 @@
 # =============================================
 
 import os
+from bs4 import BeautifulSoup
 
-collection = input("Dans quelle collection ? > ")
-document = input("Dans quelle sous-dossier ? > ")
+
+collection = input("Give collection name > ")
+document = input("Give directory name > ")
 
 location = os.getcwd() #get current working directory
 counter = 0 
-files = []
+pagecounter = 0
+sortedcontent = []
 
 path = location + "/data/%s/%s" % (collection, document)
 try:
 	foldercontent = os.listdir(path)
+
 	if len(foldercontent) > 0:
+		for filename in foldercontent:
+			if filename.endswith(".xml"):
+				filename = filename.replace(".xml", "")
+				try: 
+					sortedcontent.append(int(filename))
+				except:
+					sortedcontent.append(filename)
+		sortedcontent.sort()
+
+		foldercontent = []
+		for filename in sortedcontent:
+			filename = str(filename) + ".xml"
+			counter += 1
+			foldercontent.append(filename)
+
+		print(foldercontent)
+
 		for file in foldercontent:
-			if file.endswith(".xml"):
-				counter += 1
-				filepath = path + "/" + file
-				with open(filepath, "r") as f:
-					content = f.read()
-					print(content)
+			filepath = path + "/" + file
+			with open(filepath, "r") as f:
+				content = f.read()
+				soup = BeautifulSoup(content, "xml")
+				if soup.PcGts:
+					pagecounter += 1
+					textregions = soup.find_all("TextRegion")
+					for textregion in textregions:
+						textequivs = textregion("TextEquiv", recursive=False)
+						for textequiv in textequivs:
+							text = textequiv.Unicode.get_text()
+							print(text)
+							print("\n")
 
 		if counter == 0:
 			print("No .xml file in the directory")
 		else:
 			print("Found %s .xml file(s) in the directory" % (counter))
-
-
+			if pagecounter == 0:
+				print("No .xml file matched PAGE format (root must be '<PcGts>'")
+			else:
+				print("Found %s .xml file(s) matching PAGE format" % (pagecounter))
 
 	else:
 		print("No file in the directory")
