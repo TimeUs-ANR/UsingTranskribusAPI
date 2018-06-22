@@ -90,6 +90,7 @@ def getmetadata(data, dirname):
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
 	dirname = dirname + "/" + documenttitle
+	# Reporting
 	print("Creating new folder in data/" + COLLECTIONNAME + "/ for document " + documenttitle)
 	createFolder(dirname)
 
@@ -97,7 +98,43 @@ def getmetadata(data, dirname):
 	with open (path, 'w') as file:
 		text = json.dumps(metadata)
 		file.write(text)
+
 	return dirname, metadata
+
+def createtranscript(url, pagenr, dirname):
+	response = requests.request("GET", url)
+	xml = response.text
+
+	filepath = dirname + "/" + str(pagenr) + ".xml"
+	with open(filepath, "w") as f:
+		f.write(xml)
+#	Reporting
+#	print(response.status_code)
+	return
+
+def gettranscripts(data, dirname):
+	pagedone = []
+	pagereport = ''
+	pagelist = data["pageList"]["pages"]
+	# Reporting
+	print("Creating xml files for " + data["md"]["title"])
+	for page in pagelist:
+		latesttranscript = page["tsList"]["transcripts"][0] 
+		if latesttranscript["status"] == "DONE":
+			url = latesttranscript["url"]
+			pagenr = latesttranscript["pageNr"]
+			createtranscript(url, pagenr, dirname)
+			pagedone.append(pagenr)
+	
+	# Reporting
+	print("Document '" + data["md"]["title"] + "' contains " + str(data["md"]["nrOfPages"]) + " pages.")
+	if len(pagedone) == 0:
+		print("No page with status 'DONE' in this document")
+	else:
+		for pagenb in pagedone:
+			pagereport = pagereport + str(pagenb) + ' '
+		print("Following pages have status 'DONE' : " + pagereport)
+	return 
 
 def getdocumentpage(sessionid, collectionid, documentid, dirname):
 	"""
@@ -109,6 +146,9 @@ def getdocumentpage(sessionid, collectionid, documentid, dirname):
 
 	# Get metadata and create metadata file
 	dirname, metadata = getmetadata(json_file, dirname)
+	transcriptlist = gettranscripts(json_file, dirname)
+
+
 	
 	# ----------------------------------------------------------------------------------------------------- HERE
 	# ADD CREATION OF XML FILES FOR EACH PAGE	
