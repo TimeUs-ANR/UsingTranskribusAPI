@@ -13,71 +13,107 @@
 
 # =============================================
 
-import os
+
+import os, datetime
 from bs4 import BeautifulSoup
 
+# ========================== #
 
-collection = input("Give collection name > ")
-document = input("Give directory name > ")
+now = datetime.datetime.now()
+timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 
-location = os.getcwd() #get current working directory
-counter = 0 
-pagecounter = 0
-sortedcontent = []
+collection = input("Give collection name : ")
 
-path = location + "/data/%s/%s" % (collection, document)
-try:
-	foldercontent = os.listdir(path)
+currentdirectory = os.path.dirname(os.path.abspath(__file__))
+path = currentdirectory + "/data/%s" % (collection)
+pathtologs = currentdirectory + "/__logs__"
 
-	if len(foldercontent) > 0:
-		for filename in foldercontent:
-			if filename.endswith(".xml"):
-				filename = filename.replace(".xml", "")
-				try: 
-					sortedcontent.append(int(filename))
-				except:
-					sortedcontent.append(filename)
-		sortedcontent.sort()
+# ========================== #
 
-		foldercontent = []
-		for filename in sortedcontent:
-			filename = str(filename) + ".xml"
-			counter += 1
-			foldercontent.append(filename)
+def initiateLog():
+	"""Initiates a log file with a timestamp
+	"""
+	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	intro = """
+	TRANSFORMING XML FILES (PAGE FORMAT) TO TEXT FILES
 
-		print(foldercontent)
+	Script ran at : %s
+	For collection '%s'.
 
-		for file in foldercontent:
-			filepath = path + "/" + file
-			with open(filepath, "r") as f:
-				content = f.read()
-				soup = BeautifulSoup(content, "xml")
-				if soup.PcGts:
-					pagecounter += 1
-					textregions = soup.find_all("TextRegion")
-					for textregion in textregions:
-						textequivs = textregion("TextEquiv", recursive=False)
-						for textequiv in textequivs:
-							text = textequiv.Unicode.get_text()
-							print(text)
-							print("\n")
+	---------------------
+""" % (now, collection)
+	with open(filepath, "w") as f:
+		f.write(intro)
+	return
 
-		if counter == 0:
-			print("No .xml file in the directory")
-		else:
-			print("Found %s .xml file(s) in the directory" % (counter))
-			if pagecounter == 0:
-				print("No .xml file matched PAGE format (root must be '<PcGts>'")
-			else:
-				print("Found %s .xml file(s) matching PAGE format" % (pagecounter))
 
+def createlog(counter, pagecounter, document):
+	if counter == 0:
+		log = "No .xml file in '%s' directory.\n" % (document)
 	else:
-		print("No file in the directory")
+		log = "Found %s .xml file(s) in '%s' directory.\n" % (counter, document)
+		if pagecounter == 0:
+			log = log + "\tNo .xml file matched PAGE format (root must be '<PcGts>'.\n"
+		else:
+			log = log + "\tFound %s .xml file(s) matching PAGE format.\n" % (pagecounter)
 
+	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	with open(filepath, "a") as f:
+		f.write(log)
+	return
+
+
+# ========================== #
+
+# PREPARING XML FILES
+
+initiateLog()
+
+try:
+	collectioncontent = os.listdir(path)
+
+	if len(collectioncontent) > 0:
+		for document in collectioncontent:
+			pathtodoc = path + "/%s" % (document)
+			try: 
+				foldercontent = os.listdir(pathtodoc)
+				sortedcontent = []
+				if len(foldercontent) > 0:
+					for filename in foldercontent:
+						if filename.endswith(".xml"):
+							filename = filename.replace(".xml", "")
+							try:
+								sortedcontent.append(int(filename))
+							except:
+								sortedcontent.append(filename)
+					sortedcontent.sort()
+
+					counter = 0
+					foldercontent = []
+					for filename in sortedcontent:
+						filename = str(filename) + ".xml"
+						counter += 1
+						foldercontent.append(filename)
+
+# CREATIONG NEW TEXT FILES 
+					pagecounter = 0
+					for file in foldercontent:
+						filepath = pathtodoc + "/%s" % (file)
+						with open(filepath, "r") as f:
+							content = f.read()
+						soup = BeautifulSoup(content, "xml")
+						if soup.PcGts:
+							pagecounter += 1
+							textregions = soup.find_all("TextRegion")
+							for textregion in textregions:
+								textequivs = textregion("TextEquiv", recursive=False)
+								for textequiv in textequivs:
+									text = textequiv.Unicode.get_text()
+
+					createlog(counter, pagecounter, document)
+
+			except Exception as e:
+				print(e)
 except Exception as e:
-        print(e)
-
-
-
-
+	print(e)
 
