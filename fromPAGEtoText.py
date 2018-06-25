@@ -79,6 +79,10 @@ try:
 				foldercontent = os.listdir(pathtodoc)
 				sortedcontent = []
 				if len(foldercontent) > 0:
+					textfile = "%s/%s.txt" % (pathtodoc, document)
+					with open(textfile, "w") as f:
+						f.write("")
+
 					for filename in foldercontent:
 						if filename.endswith(".xml"):
 							filename = filename.replace(".xml", "")
@@ -95,10 +99,12 @@ try:
 						counter += 1
 						foldercontent.append(filename)
 
-# CREATIONG NEW TEXT FILES 
+# GETTING TEXT DATA FOR EACJ PAGE IN EACH XML FILE
 					pagecounter = 0
 					for file in foldercontent:
-						filepath = pathtodoc + "/%s" % (file)
+						pagenr = file.replace(".xml", "")
+
+						filepath = "%s/%s" % (pathtodoc, file)
 						with open(filepath, "r") as f:
 							content = f.read()
 						soup = BeautifulSoup(content, "xml")
@@ -106,11 +112,18 @@ try:
 							pagecounter += 1
 							textregions = soup.find_all("TextRegion")
 							for textregion in textregions:
+							#	regionid = récupérer la valeur de @id de TextRegion --------------------------------- /!\  
 								textequivs = textregion("TextEquiv", recursive=False)
 								for textequiv in textequivs:
 									text = textequiv.Unicode.get_text()
-
+# CREATING TEXT FILES
+									with open(textfile, "a") as f:
+										f.write("%s\n" %(text))
+							with open(textfile, "a") as f:
+								f.write("\n[.../... fin de la page %s]\n\n" % (pagenr))
 					createlog(counter, pagecounter, document)
+
+
 
 			except Exception as e:
 				print(e)
