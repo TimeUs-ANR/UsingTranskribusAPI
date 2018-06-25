@@ -87,7 +87,7 @@ def getmetadata(data):
 	metadata = data["md"]
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
-	pathtodoc = pathtocol + documenttitle
+	pathtodoc = "%s/%s" % (pathtocol, documenttitle)
 	# Reporting
 	print("Creating new folder in data/%s/ for document %s." % (COLLECTIONNAME, documenttitle))
 	createFolder(pathtodoc)
