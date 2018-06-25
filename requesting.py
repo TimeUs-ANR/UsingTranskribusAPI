@@ -1,11 +1,17 @@
 import requests, json, os, datetime
 import xml.etree.ElementTree as ET
-
 from secrets import username, password
 
 COLLECTIONNAME = 'timeUS'
+
 now = datetime.datetime.now()
 timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+
+currentdirectory = os.path.dirname(os.path.abspath(__file__))
+pathtodata = currentdirectory + "/data"
+pathtocol = pathtodata + "/%s" % (COLLECTIONNAME)
+pathtologs = currentdirectory + "/__logs__"
+
 
 # ============================= #
 
@@ -21,11 +27,11 @@ def createFolder(directory):
 	return
 
 
-def initiateLog(dirname):
+def initiateLog():
 	"""Initiates a log file with a timestamp
 	"""
-	filepath = dirname + "/log-" + timestamp + ".txt"
-	intro = "Script ran at : \n" + str(now) + "\n\n---------------------\n\n"
+	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	intro = "RETRIEVING XML FILES FROM TRANSKRIBUS\n\nScript ran at : \n%s\n\n---------------------\n\n" % (now)
 	with open(filepath, "w") as f:
 		f.write(intro)
 	return
@@ -35,25 +41,23 @@ def createDonelog(title, nrOfPages, pagedone, errorlog):
 	"""Creates simple reports for each document in the collection with status "Done"
 	"""
 	pagereport = ''
-	dirname = os.path.dirname(os.path.abspath(__file__))
-	dirname = dirname + "/data/" + COLLECTIONNAME + "/__logs__"
 	nrPageDone = len(pagedone)
-	reportnrpages = "Document '" + title + "' contains " + str(nrOfPages) + " pages."
+	reportnrpages = "Document '%s' contains %s pages." % (title, nrOfPages)
 
 	if len(pagedone) == 0:
-		report = reportnrpages + "\nNo page with status 'DONE' in document '" + title + "'.\n\n"
+		report = "%s\nNo page with status 'DONE' in document '%s'.\n\n" % (reportnrpages, title)
 	else:
 		for pagenb in pagedone:
 			pagereport = pagereport + str(pagenb) + ' '
-		report = reportnrpages + "\nDocument '" + title + "' has " + str(nrPageDone) + " with status 'DONE'.\nFollowing pages have status 'DONE' : " + pagereport + "\n" + errorlog + "\n\n"
+		report = "%s\nDocument '%s' has %s with status 'DONE'.\nFollowing pages have status 'DONE' : %s\n%s\n\n" % (reportnrpages, title, nrPageDone, pagereport, errorlog)
 
-	filepath = dirname + "/log-" + timestamp + ".txt"
+	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
 	with open(filepath, "a") as f:
 		f.write(report)
 	return
 
 
-def createtranscript(url, pagenr, dirname):
+def createtranscript(url, pagenr, pathtodoc):
 	"""Creates a new xml file containing the transcript given by Transkribus for a page, in PAGE standard. File is name after corresponding page number.
 	"""
 	response = requests.request("GET", url)
@@ -62,35 +66,33 @@ def createtranscript(url, pagenr, dirname):
 	else:
 		error = False
 		xml = response.text
-		filepath = dirname + "/" + str(pagenr) + ".xml"
+		filepath = "%s/%s.xml" % (pathtodoc, pagenr)
 		with open(filepath, "w") as f:
 			f.write(xml)
-#	Reporting
-#	print(response.status_code)
 	return error
 
 # ----------------------------- #
 
-def getmetadata(data, dirname):
+def getmetadata(data):
 	"""Creates a new json file containing the document's metadata in the corresponding folder
 	"""
 	metadata = data["md"]
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
-	dirname = dirname + "/" + documenttitle
+	pathtodoc = pathtocol + documenttitle
 	# Reporting
-	print("Creating new folder in data/" + COLLECTIONNAME + "/ for document " + documenttitle)
-	createFolder(dirname)
+	print("Creating new folder in data/%s/ for document %s." % (COLLECTIONNAME, documenttitle))
+	createFolder(pathtodoc)
 
-	filepath = dirname + "/metadata.json"
+	filepath = "%s/metadata.json" % (pathtodoc)
 	with open (filepath, 'w') as file:
 		text = json.dumps(metadata)
 		file.write(text)
 
-	return dirname, metadata
+	return pathtodoc, metadata
 
 
-def getDonetranscripts(data, dirname):
+def getDonetranscripts(data, pathtodoc):
 	"""Identify page transcripts with status DONE for a given document, provokes creation of xml file and log
 	"""
 	pagedone = []
@@ -103,7 +105,7 @@ def getDonetranscripts(data, dirname):
 		if latesttranscript["status"] == "DONE":
 			url = latesttranscript["url"]
 			pagenr = latesttranscript["pageNr"]
-			error = createtranscript(url, pagenr, dirname)
+			error = createtranscript(url, pagenr, pathtodoc)
 			pagedone.append(pagenr)
 			if error is True:
 				errors += 1
@@ -119,18 +121,18 @@ def getDonetranscripts(data, dirname):
 	return errors
 
 
-def getdocumentpage(sessionid, collectionid, documentid, dirname):
+def getdocumentpage(sessionid, collectionid, documentid):
 	"""
 	"""
 	allerrors = 0
-	url = "https://transkribus.eu/TrpServer/rest/collections/" + str(collectionid) + "/" + str(documentid) + "/fulldoc"
+	url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" %(collectionid, documentid)
 	querystring = {"JSESSIONID":sessionid}
 	response = requests.request("GET", url, params=querystring)
 	json_file = json.loads(response.text)
 
 	# Get metadata and create metadata file and log
-	dirname, metadata = getmetadata(json_file, dirname)
-	errors = getDonetranscripts(json_file, dirname)
+	pathtodoc, metadata = getmetadata(json_file)
+	errors = getDonetranscripts(json_file, pathtodoc)
 	allerrors += errors
 	return allerrors
 
@@ -147,7 +149,7 @@ def getsessionid():
 		xml = ET.fromstring(response.text)
 		sessionid = xml.find('sessionId').text
 		# Reporting
-		print("Successfully connected ; session ID : " + sessionid)
+		print("Successfully connected ; session ID : %s." % (sessionid))
 	except Exception as e:
 		print("Connection failed.")
 		print(e)
@@ -171,9 +173,9 @@ def getcollectionid(sessionid):
 
 	# Reporting 
 	if not collectionid:
-		print('Verify targeted collection name, no collection named ' + COLLECTIONNAME + 'in the file !')
+		print('Verify targeted collection name, no collection named %s in the file !' % (COLLECTIONNAME))
 	else:
-		print("Found " + COLLECTIONNAME + " ; ID : " + str(collectionid))
+		print("Found %s ; ID : %s." % (COLLECTIONNAME, collectionid))
 
 	return collectionid
 
@@ -196,7 +198,7 @@ def getdocumentid(sessionid, collectionid):
 	idreport = ''
 	for docid in doclist:
 		idreport = idreport + str(docid) + ' '
-	print("Found following document IDs in " + COLLECTIONNAME + " collection : " + idreport)
+	print("Found following document IDs in %s collection : %s." % (COLLECTIONNAME, idreport))
 	return doclist
 
 
@@ -207,16 +209,12 @@ collectionid = getcollectionid(sessionid)
 totalerrors = 0
 if collectionid:
 	listofdocumentid = getdocumentid(sessionid, collectionid)
-	dirname = os.path.dirname(os.path.abspath(__file__))
-	dirname = dirname + "/data/" + COLLECTIONNAME
-	print("Creating new folder in data/ for " + COLLECTIONNAME + " collection.")
-	createFolder(dirname)
-	logfolder = dirname + "/__logs__"
-	createFolder(logfolder)
-	initiateLog(logfolder)
+	print("Creating new folder in data/ for %s collection if does not already exist." % (COLLECTIONNAME))
+	createFolder(pathtocol)
+	initiateLog()
 
 	for documentid in listofdocumentid:
-		errors = getdocumentpage(sessionid, collectionid, documentid, dirname)
+		errors = getdocumentpage(sessionid, collectionid, documentid)
 		totalerrors += errors
 	if totalerrors != 0:
 		print("Warning! %s server error(s) while retrieving xml files!" % (totalerrors))
