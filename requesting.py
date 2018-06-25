@@ -31,7 +31,15 @@ def initiateLog():
 	"""Initiates a log file with a timestamp
 	"""
 	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
-	intro = "RETRIEVING XML FILES FROM TRANSKRIBUS\n\nScript ran at : \n%s\n\n---------------------\n\n" % (now)
+	intro = """
+	RETRIEVING XML FILES FROM TRANSKRIBUS
+
+	Script ran at : %s
+	For collection '%s'
+
+	---------------------
+
+""" % (now, COLLECTIONNAME)
 	with open(filepath, "w") as f:
 		f.write(intro)
 	return
