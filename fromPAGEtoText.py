@@ -112,13 +112,13 @@ try:
 							pagecounter += 1
 							textregions = soup.find_all("TextRegion")
 							for textregion in textregions:
-							#	regionid = récupérer la valeur de @id de TextRegion --------------------------------- /!\  
+								regionid = textregion['id']
 								textequivs = textregion("TextEquiv", recursive=False)
 								for textequiv in textequivs:
 									text = textequiv.Unicode.get_text()
 # CREATING TEXT FILES
 									with open(textfile, "a") as f:
-										f.write("%s\n" %(text))
+										f.write("%s\n\n[.../R fin de la zone %s]\n\n" %(text, regionid))
 							with open(textfile, "a") as f:
 								f.write("\n[.../... fin de la page %s]\n\n" % (pagenr))
 					createlog(counter, pagecounter, document)
