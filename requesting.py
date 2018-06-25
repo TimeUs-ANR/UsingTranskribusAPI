@@ -31,12 +31,12 @@ def initiateLog(dirname):
 	return
 
 
-def createDonelog(title, nrOfPages, pagedone):
+def createDonelog(title, nrOfPages, pagedone, errorlog):
 	"""Creates simple reports for each document in the collection with status "Done"
 	"""
 	pagereport = ''
 	dirname = os.path.dirname(os.path.abspath(__file__))
-	dirname = dirname + "/data/" + COLLECTIONNAME + "/logs"
+	dirname = dirname + "/data/" + COLLECTIONNAME + "/__logs__"
 	nrPageDone = len(pagedone)
 	reportnrpages = "Document '" + title + "' contains " + str(nrOfPages) + " pages."
 
@@ -45,7 +45,7 @@ def createDonelog(title, nrOfPages, pagedone):
 	else:
 		for pagenb in pagedone:
 			pagereport = pagereport + str(pagenb) + ' '
-		report = reportnrpages + "\nDocument '" + title + "' has " + str(nrPageDone) + " with status 'DONE'.\nFollowing pages have status 'DONE' : " + pagereport + "\n\n"
+		report = reportnrpages + "\nDocument '" + title + "' has " + str(nrPageDone) + " with status 'DONE'.\nFollowing pages have status 'DONE' : " + pagereport + "\n" + errorlog + "\n\n"
 
 	filepath = dirname + "/log-" + timestamp + ".txt"
 	with open(filepath, "a") as f:
@@ -57,14 +57,17 @@ def createtranscript(url, pagenr, dirname):
 	"""Creates a new xml file containing the transcript given by Transkribus for a page, in PAGE standard. File is name after corresponding page number.
 	"""
 	response = requests.request("GET", url)
-	xml = response.text
-
-	filepath = dirname + "/" + str(pagenr) + ".xml"
-	with open(filepath, "w") as f:
-		f.write(xml)
+	if response.status_code == 503:
+		error = True
+	else:
+		error = False
+		xml = response.text
+		filepath = dirname + "/" + str(pagenr) + ".xml"
+		with open(filepath, "w") as f:
+			f.write(xml)
 #	Reporting
 #	print(response.status_code)
-	return
+	return error
 
 # ----------------------------- #
 
@@ -91,6 +94,7 @@ def getDonetranscripts(data, dirname):
 	"""Identify page transcripts with status DONE for a given document, provokes creation of xml file and log
 	"""
 	pagedone = []
+	errors = 0
 	pagelist = data["pageList"]["pages"]
 	# Reporting
 	print("Creating xml files for " + data["md"]["title"])
@@ -99,19 +103,26 @@ def getDonetranscripts(data, dirname):
 		if latesttranscript["status"] == "DONE":
 			url = latesttranscript["url"]
 			pagenr = latesttranscript["pageNr"]
-			createtranscript(url, pagenr, dirname)
+			error = createtranscript(url, pagenr, dirname)
 			pagedone.append(pagenr)
-	
+			if error is True:
+				errors += 1
+
 	# Reporting
+	if errors == 0:
+		errorlog = "No server error while retrieving xml files."
+	else :
+		errorlog = str(errors) + " server error(s) retrieving xml files."
 	nrOfPages = data["md"]["nrOfPages"]
 	title = data["md"]["title"]
-	createDonelog(title, nrOfPages, pagedone)	
-	return 
+	createDonelog(title, nrOfPages, pagedone, errorlog)	
+	return errors
 
 
 def getdocumentpage(sessionid, collectionid, documentid, dirname):
 	"""
 	"""
+	allerrors = 0
 	url = "https://transkribus.eu/TrpServer/rest/collections/" + str(collectionid) + "/" + str(documentid) + "/fulldoc"
 	querystring = {"JSESSIONID":sessionid}
 	response = requests.request("GET", url, params=querystring)
@@ -119,8 +130,9 @@ def getdocumentpage(sessionid, collectionid, documentid, dirname):
 
 	# Get metadata and create metadata file and log
 	dirname, metadata = getmetadata(json_file, dirname)
-	transcriptlist = getDonetranscripts(json_file, dirname)
-	return
+	errors = getDonetranscripts(json_file, dirname)
+	allerrors += errors
+	return allerrors
 
 
 def getsessionid():
@@ -131,11 +143,14 @@ def getsessionid():
 	headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 	response = requests.request("POST", url, data=payload, headers=headers)
 
-	xml = ET.fromstring(response.text)
-	sessionid = xml.find('sessionId').text
-
-	# Reporting
-	print("Successfully connected ; session ID : " + sessionid)
+	try:
+		xml = ET.fromstring(response.text)
+		sessionid = xml.find('sessionId').text
+		# Reporting
+		print("Successfully connected ; session ID : " + sessionid)
+	except Exception as e:
+		print("Connection failed.")
+		print(e)
 	return sessionid
 
 
@@ -189,18 +204,22 @@ def getdocumentid(sessionid, collectionid):
 
 sessionid = getsessionid()
 collectionid = getcollectionid(sessionid)
+totalerrors = 0
 if collectionid:
 	listofdocumentid = getdocumentid(sessionid, collectionid)
 	dirname = os.path.dirname(os.path.abspath(__file__))
 	dirname = dirname + "/data/" + COLLECTIONNAME
 	print("Creating new folder in data/ for " + COLLECTIONNAME + " collection.")
 	createFolder(dirname)
-	logfolder = dirname + "/logs"
+	logfolder = dirname + "/__logs__"
 	createFolder(logfolder)
 	initiateLog(logfolder)
 
 	for documentid in listofdocumentid:
-		getdocumentpage(sessionid, collectionid, documentid, dirname)
+		errors = getdocumentpage(sessionid, collectionid, documentid, dirname)
+		totalerrors += errors
+	if totalerrors != 0:
+		print("Warning! %s server error(s) while retrieving xml files!" % (totalerrors))
 
 
 
