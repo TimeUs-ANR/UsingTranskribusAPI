@@ -1,3 +1,5 @@
 .venv/
-data/timeUS/
+data/
+__pycache__/
+__logs__/
 secrets.py
