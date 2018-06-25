@@ -49,13 +49,13 @@ def initiateLog():
 
 def createlog(counter, pagecounter, document):
 	if counter == 0:
-		log = "No .xml file in '%s' directory.\n" % (document)
+		log = "No .xml file in '%s' directory.\n\n" % (document)
 	else:
 		log = "Found %s .xml file(s) in '%s' directory.\n" % (counter, document)
 		if pagecounter == 0:
-			log = log + "\tNo .xml file matched PAGE format (root must be '<PcGts>'.\n"
+			log = log + "\tNo .xml file matched PAGE format (root must be '<PcGts>'.\n\n"
 		else:
-			log = log + "\tFound %s .xml file(s) matching PAGE format.\n" % (pagecounter)
+			log = log + "\tFound %s .xml file(s) matching PAGE format.\n\n" % (pagecounter)
 
 	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
 	with open(filepath, "a") as f:
