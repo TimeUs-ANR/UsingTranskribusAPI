@@ -65,11 +65,11 @@ pathtotextexport = "%s/__TextExports__" % (path)
 initiateLog()
 createFolder(pathtotextexport)
 
-# PREPARING XML FILES
+# PREPARATION DES FICHIERS
 
 try:
 	collectioncontent = os.listdir(path)
-	collectioncontent.remove("__TextExports__")
+	collectioncontent.remove("__TextExports__").remove("__AllInOne__")
 
 	if len(collectioncontent) > 0:
 		for document in collectioncontent:
@@ -78,6 +78,8 @@ try:
 				foldercontent = os.listdir(pathtodoc)
 				sortedcontent = []
 				if len(foldercontent) > 0:
+					# METTRE LES FICHIERS XML DANS L'ORDRE
+					# transformer les noms de fichiers en integer quand c'est possible
 					for filename in foldercontent:
 						if filename.endswith(".xml"):
 							filename = filename.replace(".xml", "")
@@ -98,7 +100,7 @@ try:
 						counter += 1
 						foldercontent.append(filename)
 
-# GETTING TEXT DATA FOR EACJ PAGE IN EACH XML FILE
+# RECUPERATION DU TEXT DES FICHIERS XML
 					pagecounter = 0
 					for file in foldercontent:
 						pagenr = file.replace(".xml", "")
@@ -115,7 +117,8 @@ try:
 								textequivs = textregion("TextEquiv", recursive=False)
 								for textequiv in textequivs:
 									text = textequiv.Unicode.get_text()
-# CREATING TEXT FILES
+# CREATION DES FICHIERS TEXTE
+# avec signalement des séparations de zones et de pages 
 									with open(textfile, "a") as f:
 										f.write("%s\n\n[.../R fin de la zone %s]\n\n" %(text, regionid))
 							with open(textfile, "a") as f:
