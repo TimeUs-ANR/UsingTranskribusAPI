@@ -4,15 +4,6 @@ from secrets import username, password
 
 COLLECTIONNAME = 'timeUS'
 
-now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
-
-currentdirectory = os.path.dirname(os.path.abspath(__file__))
-pathtodata = currentdirectory + "/data"
-pathtocol = pathtodata + "/%s" % (COLLECTIONNAME)
-pathtologs = currentdirectory + "/__logs__"
-
-
 # ============================= #
 
 def createFolder(directory):
@@ -211,6 +202,14 @@ def getdocumentid(sessionid, collectionid):
 
 
 # ============================= #
+
+now = datetime.datetime.now()
+timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+
+currentdirectory = os.path.dirname(os.path.abspath(__file__))
+pathtodata = currentdirectory + "/data"
+pathtocol = "%s/%s" % (pathtodata, COLLECTIONNAME)
+pathtologs = currentdirectory + "/__logs__"
 
 sessionid = getsessionid()
 collectionid = getcollectionid(sessionid)

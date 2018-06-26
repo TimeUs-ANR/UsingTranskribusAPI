@@ -1,34 +1,19 @@
-
-
-# demander de choisir le dossier de data/ à traiter
-# vérifier que le dossier existe
-# demander de choisir le sous-dossier à traiter
-# 		éventuellement choisir une liste de nom de dossier à traiter à la suite
-# vérifier que le dossier existe
-# vérifier que le dossier contient des fichiers .xml
-
-# charger le fichiers dans l'ordre croissant
-# récupérer le texte dans "/PcGts/Page/TextRegion/TextEquiv/Unicode/text()" (plusieurs TextRegion par fichier)
-# l'écrire dans un nouveau fichier .txt
-
-# =============================================
-
-
 import os, datetime
 from bs4 import BeautifulSoup
 
 # ========================== #
 
-now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+def createFolder(directory):
+	"""Creates a new folder
+	source : https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
+	"""
+	try:
+		if not os.path.exists(directory):
+			os.makedirs(directory)
+	except OSError as e:
+		print(e)
+	return
 
-collection = input("Give collection name : ")
-
-currentdirectory = os.path.dirname(os.path.abspath(__file__))
-path = currentdirectory + "/data/%s" % (collection)
-pathtologs = currentdirectory + "/__logs__"
-
-# ========================== #
 
 def initiateLog():
 	"""Initiates a log file with a timestamp
@@ -48,6 +33,8 @@ def initiateLog():
 
 
 def createlog(counter, pagecounter, document):
+	""" Add logs to current log file
+	"""
 	if counter == 0:
 		log = "No .xml file in '%s' directory.\n\n" % (document)
 	else:
@@ -65,12 +52,24 @@ def createlog(counter, pagecounter, document):
 
 # ========================== #
 
-# PREPARING XML FILES
+now = datetime.datetime.now()
+timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+
+collection = input("Give collection name : ")
+
+currentdirectory = os.path.dirname(os.path.abspath(__file__))
+path = "%s/data/%s" % (currentdirectory, collection)
+pathtologs = "%s/__logs__" % (currentdirectory)
+pathtotextexport = "%s/__TextExports__" % (path) 
 
 initiateLog()
+createFolder(pathtotextexport)
+
+# PREPARING XML FILES
 
 try:
 	collectioncontent = os.listdir(path)
+	collectioncontent.remove("__TextExports__")
 
 	if len(collectioncontent) > 0:
 		for document in collectioncontent:
@@ -79,10 +78,6 @@ try:
 				foldercontent = os.listdir(pathtodoc)
 				sortedcontent = []
 				if len(foldercontent) > 0:
-					textfile = "%s/%s.txt" % (pathtodoc, document)
-					with open(textfile, "w") as f:
-						f.write("")
-
 					for filename in foldercontent:
 						if filename.endswith(".xml"):
 							filename = filename.replace(".xml", "")
@@ -91,6 +86,10 @@ try:
 							except:
 								sortedcontent.append(filename)
 					sortedcontent.sort()
+					if len(sortedcontent) > 0:
+						textfile = "%s/%s.txt" % (pathtotextexport, document)
+						with open(textfile, "w") as f:
+							f.write("")
 
 					counter = 0
 					foldercontent = []
