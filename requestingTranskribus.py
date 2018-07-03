@@ -68,6 +68,7 @@ def createtranscript(url, pagenr, pathtodoc):
 		xml = response.text
 		filepath = "%s/%s.xml" % (pathtodoc, pagenr)
 		soup = BeautifulSoup(xml, "xml")
+		# Adding attributes to Page elements : @url and @id
 		if soup.PcGts:
 			soup.Page["url"] = url
 			soup.Page["id"] = pagenr
@@ -81,11 +82,12 @@ def getmetadata(data):
 	"""Creates a new json file containing the document's metadata in the corresponding folder
 	"""
 	metadata = data["md"]
+	docid = metadata["docId"]
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
-	pathtodoc = "%s/%s" % (pathtocol, documenttitle)
+	pathtodoc = "%s/%s - %s" % (pathtocol, docid, documenttitle)
 	# Reporting
-	print("Creating new folder in data/%s/ for document %s." % (COLLECTIONNAME, documenttitle))
+	print("Creating new folder in data/%s/ for document %s, if does not already exist." % (COLLECTIONNAME, documenttitle))
 	createFolder(pathtodoc)
 
 	filepath = "%s/metadata.json" % (pathtodoc)
