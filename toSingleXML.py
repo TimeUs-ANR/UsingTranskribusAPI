@@ -54,7 +54,7 @@ path = "%s/data/%s" % (currentdirectory, collection)
 pathtologs = "%s/__logs__" % (currentdirectory)
 pathtoexports = "%s/__AllInOne__" % (path) 
 
-# PREPARATION DES FICHIERS 
+# PREPARING FILES
 try: 
 	verifycollections = os.listdir(datacontent)
 	if collection in verifycollections:
@@ -62,8 +62,10 @@ try:
 		createFolder(pathtoexports)
 		try:
 			collectioncontent = os.listdir(path)
-			collectioncontent.remove("__TextExports__")
-			collectioncontent.remove("__AllInOne__")
+			if "__TextExports__" in collectioncontent:
+				collectioncontent.remove("__TextExports__")
+			if "__AllInOne__" in collectioncontent:
+				collectioncontent.remove("__AllInOne__")
 
 			if len(collectioncontent) > 0:
 				for document in collectioncontent:
@@ -84,17 +86,17 @@ try:
 										sortedcontent.append(int(filename))
 									except:
 										sortedcontent.append(filename)
-							# trier
+							# SORT
 							sortedcontent.sort()
-							# reconstruire les noms de fichiers
+							# REBUILD FILE NAMES
 							foldercontent = []
 							for filename in sortedcontent:
 								filename = "%s.xml" % (filename)
 								foldercontent.append(filename)
 
 							pathtoexport = "%s/%s.xml" % (pathtoexports, document)
-							# CREER LE CONTENU DU NOUVEAU FICHIER
-							# création du header
+							# CREATE CONTENT FOR THE NEW FILE
+							# CREATE HEADER
 							i = 0
 							top = len(foldercontent)
 							while i != top:
@@ -111,7 +113,7 @@ try:
 									i = top
 								else:
 									i += 1
-							# création du contenu
+							# CREATE CONTENT
 							for file in foldercontent:
 								filepath = "%s/%s" % (pathtodoc, file)
 								with open(filepath, "r") as f:
@@ -119,10 +121,10 @@ try:
 								soup = BeautifulSoup(content, "xml")
 								if soup.PcGts:
 									counter += 1
-									page = soup.Page
+									page = soup.Page									
 									with open(pathtoexport, "a") as f:
 										f.write("\n" + str(page))
-							# fermeture de la dernière balise
+							# CLOSE LAST TAGNAMES
 							if needend is True:
 								with open(pathtoexport, "a") as f:
 									f.write("\n</PageGrp>\n</PcGts>")
