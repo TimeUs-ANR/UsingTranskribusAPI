@@ -69,7 +69,10 @@ createFolder(pathtotextexport)
 
 try:
 	collectioncontent = os.listdir(path)
-	collectioncontent.remove("__TextExports__").remove("__AllInOne__")
+	if "__TextExports__" in collectioncontent:
+		collectioncontent.remove("__TextExports__")
+	if "__AllInOne__" in collectioncontent:
+		collectioncontent.remove("__AllInOne__")
 
 	if len(collectioncontent) > 0:
 		for document in collectioncontent:
