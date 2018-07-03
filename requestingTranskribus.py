@@ -1,4 +1,5 @@
 import requests, json, os, datetime
+from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 from secrets import username, password
 
@@ -66,8 +67,12 @@ def createtranscript(url, pagenr, pathtodoc):
 		error = False
 		xml = response.text
 		filepath = "%s/%s.xml" % (pathtodoc, pagenr)
-		with open(filepath, "w") as f:
-			f.write(xml)
+		soup = BeautifulSoup(xml, "xml")
+		if soup.PcGts:
+			soup.Page["url"] = url
+			soup.Page["id"] = pagenr
+			with open(filepath, "w") as f:
+				f.write(str(soup))
 	return error
 
 # ----------------------------- #
