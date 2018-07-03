@@ -1,9 +1,7 @@
 import requests, json, os, datetime
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
-from secrets import username, password
-
-COLLECTIONNAME = 'timeUS'
+from config import username, password, collectionnames, status
 
 # ============================= #
 
@@ -22,16 +20,20 @@ def createFolder(directory):
 def initiateLog():
 	"""Initiates a log file with a timestamp
 	"""
+	collections = ""
+	for name in collectionnames:
+		collections = collections + "'%s' " % (name)
+
 	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
 	intro = """
 	RETRIEVING XML FILES FROM TRANSKRIBUS
 
 	Script ran at : %s
-	For collection '%s'
+	For collection(s) : %s
 
 	---------------------
 
-""" % (now, COLLECTIONNAME)
+""" % (now, collections)
 	with open(filepath, "w") as f:
 		f.write(intro)
 	return
@@ -54,6 +56,13 @@ def createDonelog(title, nrOfPages, pagedone, errorlog):
 	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
 	with open(filepath, "a") as f:
 		f.write(report)
+	return
+
+def createSeparationInLog():
+	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	separation = "\n ======================================================== \n\n"
+	with open(filepath, "a") as f:
+		f.write(separation)
 	return
 
 
@@ -215,23 +224,26 @@ timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minu
 
 currentdirectory = os.path.dirname(os.path.abspath(__file__))
 pathtodata = currentdirectory + "/data"
-pathtocol = "%s/%s" % (pathtodata, COLLECTIONNAME)
 pathtologs = currentdirectory + "/__logs__"
-
 sessionid = getsessionid()
-collectionid = getcollectionid(sessionid)
-totalerrors = 0
-if collectionid:
-	listofdocumentid = getdocumentid(sessionid, collectionid)
-	print("Creating new folder in data/ for %s collection if does not already exist." % (COLLECTIONNAME))
-	createFolder(pathtocol)
-	initiateLog()
+initiateLog()
 
-	for documentid in listofdocumentid:
-		errors = getdocumentpage(sessionid, collectionid, documentid)
-		totalerrors += errors
-	if totalerrors != 0:
-		print("Warning! %s server error(s) while retrieving xml files!" % (totalerrors))
+for COLLECTIONNAME in collectionnames: 
+	pathtocol = "%s/%s" % (pathtodata, COLLECTIONNAME)
+	
+	collectionid = getcollectionid(sessionid)
+	totalerrors = 0
+	if collectionid:
+		listofdocumentid = getdocumentid(sessionid, collectionid)
+		print("Creating new folder in data/ for %s collection if does not already exist." % (COLLECTIONNAME))
+		createFolder(pathtocol)
+		
+		for documentid in listofdocumentid:
+			errors = getdocumentpage(sessionid, collectionid, documentid)
+			totalerrors += errors
+		if totalerrors != 0:
+			print("Warning! %s server error(s) while retrieving xml files!" % (totalerrors))
+		createSeparationInLog()
 
 
 
