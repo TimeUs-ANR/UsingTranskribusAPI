@@ -20,9 +20,9 @@ def createFolder(directory):
 def initiateLog():
 	"""Initiates a log file with a timestamp
 	"""
-	collections = ""
-	for name in collectionnames:
-		collections = collections + "'%s' " % (name)
+	collist = ""
+	for collection in collectionnames:
+		collist = collist + "'%s' " % (collection)
 
 	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
 	intro = """
@@ -33,7 +33,7 @@ def initiateLog():
 
 	---------------------
 
-""" % (now, collections)
+""" % (now, collist)
 	with open(filepath, "w") as f:
 		f.write(intro)
 	return
