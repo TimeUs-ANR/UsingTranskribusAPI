@@ -1,5 +1,6 @@
 import os, datetime
 from bs4 import BeautifulSoup
+from config import textcollectionnames as collections
 
 # ========================== #
 
@@ -18,15 +19,18 @@ def createFolder(directory):
 def initiateLog():
 	"""Initiates a log file with a timestamp
 	"""
+	collist = ""
+	for collection in collections:
+		collist = collist + "'%s' " % (collection)
 	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
 	intro = """
 	TRANSFORMING XML FILES (PAGE FORMAT) TO TEXT FILES
 
 	Script ran at : %s
-	For collection '%s'.
+	For collections %s.
 
 	---------------------
-""" % (now, collection)
+""" % (now, collist)
 	with open(filepath, "w") as f:
 		f.write(intro)
 	return
@@ -54,84 +58,82 @@ def createlog(counter, pagecounter, document):
 
 now = datetime.datetime.now()
 timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
-
-collection = input("Give collection name : ")
-
 currentdirectory = os.path.dirname(os.path.abspath(__file__))
-path = "%s/data/%s" % (currentdirectory, collection)
 pathtologs = "%s/__logs__" % (currentdirectory)
-pathtotextexport = "%s/__TextExports__" % (path) 
-
 initiateLog()
-createFolder(pathtotextexport)
 
-# PREPARATION DES FICHIERS
+for collection in collections:
+	path = "%s/data/%s" % (currentdirectory, collection)
+	pathtotextexport = "%s/__TextExports__" % (path) 
+	createFolder(pathtotextexport)
 
-try:
-	collectioncontent = os.listdir(path)
-	if "__TextExports__" in collectioncontent:
-		collectioncontent.remove("__TextExports__")
-	if "__AllInOne__" in collectioncontent:
-		collectioncontent.remove("__AllInOne__")
+	# PREPARATION DES FICHIERS
 
-	if len(collectioncontent) > 0:
-		for document in collectioncontent:
-			pathtodoc = path + "/%s" % (document)
-			try: 
-				foldercontent = os.listdir(pathtodoc)
-				sortedcontent = []
-				if len(foldercontent) > 0:
-					# METTRE LES FICHIERS XML DANS L'ORDRE
-					# transformer les noms de fichiers en integer quand c'est possible
-					for filename in foldercontent:
-						if filename.endswith(".xml"):
-							filename = filename.replace(".xml", "")
-							try:
-								sortedcontent.append(int(filename))
-							except:
-								sortedcontent.append(filename)
-					sortedcontent.sort()
-					if len(sortedcontent) > 0:
-						textfile = "%s/%s.txt" % (pathtotextexport, document)
-						with open(textfile, "w") as f:
-							f.write("")
+	try:
+		collectioncontent = os.listdir(path)
+		if "__TextExports__" in collectioncontent:
+			collectioncontent.remove("__TextExports__")
+		if "__AllInOne__" in collectioncontent:
+			collectioncontent.remove("__AllInOne__")
 
-					counter = 0
-					foldercontent = []
-					for filename in sortedcontent:
-						filename = str(filename) + ".xml"
-						counter += 1
-						foldercontent.append(filename)
+		if len(collectioncontent) > 0:
+			for document in collectioncontent:
+				pathtodoc = path + "/%s" % (document)
+				try: 
+					foldercontent = os.listdir(pathtodoc)
+					sortedcontent = []
+					if len(foldercontent) > 0:
+						# METTRE LES FICHIERS XML DANS L'ORDRE
+						# transformer les noms de fichiers en integer quand c'est possible
+						for filename in foldercontent:
+							if filename.endswith(".xml"):
+								filename = filename.replace(".xml", "")
+								try:
+									sortedcontent.append(int(filename))
+								except:
+									sortedcontent.append(filename)
+						sortedcontent.sort()
+						if len(sortedcontent) > 0:
+							textfile = "%s/%s.txt" % (pathtotextexport, document)
+							with open(textfile, "w") as f:
+								f.write("")
 
-# RECUPERATION DU TEXT DES FICHIERS XML
-					pagecounter = 0
-					for file in foldercontent:
-						pagenr = file.replace(".xml", "")
+						counter = 0
+						foldercontent = []
+						for filename in sortedcontent:
+							filename = str(filename) + ".xml"
+							counter += 1
+							foldercontent.append(filename)
 
-						filepath = "%s/%s" % (pathtodoc, file)
-						with open(filepath, "r") as f:
-							content = f.read()
-						soup = BeautifulSoup(content, "xml")
-						if soup.PcGts:
-							pagecounter += 1
-							textregions = soup.find_all("TextRegion")
-							for textregion in textregions:
-								regionid = textregion['id']
-								textequivs = textregion("TextEquiv", recursive=False)
-								for textequiv in textequivs:
-									text = textequiv.Unicode.get_text()
-# CREATION DES FICHIERS TEXTE
-# avec signalement des séparations de zones et de pages 
-									with open(textfile, "a") as f:
-										f.write("%s\n\n[.../R fin de la zone %s]\n\n" %(text, regionid))
-							with open(textfile, "a") as f:
-								f.write("\n[.../... fin de la page %s]\n\n" % (pagenr))
-					createlog(counter, pagecounter, document)
+	# RECUPERATION DU TEXT DES FICHIERS XML
+						pagecounter = 0
+						for file in foldercontent:
+							pagenr = file.replace(".xml", "")
+
+							filepath = "%s/%s" % (pathtodoc, file)
+							with open(filepath, "r") as f:
+								content = f.read()
+							soup = BeautifulSoup(content, "xml")
+							if soup.PcGts:
+								pagecounter += 1
+								textregions = soup.find_all("TextRegion")
+								for textregion in textregions:
+									regionid = textregion['id']
+									textequivs = textregion("TextEquiv", recursive=False)
+									for textequiv in textequivs:
+										text = textequiv.Unicode.get_text()
+	# CREATION DES FICHIERS TEXTE
+	# avec signalement des séparations de zones et de pages 
+										with open(textfile, "a") as f:
+											f.write("%s\n\n[.../R fin de la zone %s]\n\n" %(text, regionid))
+								with open(textfile, "a") as f:
+									f.write("\n[.../... fin de la page %s]\n\n" % (pagenr))
+						createlog(counter, pagecounter, document)
 
 
 
-			except Exception as e:
-				print(e)
-except Exception as e:
-	print(e)
+				except Exception as e:
+					print(e)
+	except Exception as e:
+		print(e)
 
