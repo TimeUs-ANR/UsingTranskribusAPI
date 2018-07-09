@@ -1,7 +1,6 @@
 # -----------------------------
 # for requestingTranskribus.py
 # -----------------------------
-
 # Transkribus username / nom d'utilisateur Transkribus
 # ex : username = 'username@mail.fr'
 username = ''
@@ -23,7 +22,6 @@ status = []
 # -----------------------------
 # for fromPAGEtoText.py
 # -----------------------------
-
 # Targeted collection name(s). Collection must have been downloaded with requestingTranskribus.py first.
 # ex : textcollectionnames = ['collectionname'] or textcollectionnames = ['firstcollection', 'secondcollection']
 textcollectionnames =  []
@@ -32,7 +30,6 @@ textcollectionnames =  []
 # -----------------------------
 # for toSingleXML.py
 # -----------------------------
-
 # Targeted collection name(s). Collection must have been downloaded with requestingTranskribus.py first.
-# ex : textcollectionnames = ['collectionname'] or textcollectionnames = ['firstcollection', 'secondcollection']
+# ex : singlecollectionnames = ['collectionname'] or signlecollectionnames = ['firstcollection', 'secondcollection']
 singlecollectionnames =  []
