@@ -6,7 +6,7 @@ Un script pour interroger l'API de Transkribus et générer des fichiers XML-TEI
 	- pour chaque collection, un dossier est créé pour contenir l'ensemble des dossiers de sous-collections.
 	- pour chaque sous-collection, un dossier est créé contenant un fichier `metadata.json`, qui contient les métadonnées de la sous-collection.  
 	- pour chaque page de la sous-collection aux statuts recherchés, un fichier `.xml` est créé, nommé d'après le numéro de page auquel il correspond.  
-	- deux attributs sont ajoutés dans le fichier `.xml` créé, pour l'élément `Page` : **@id** dont la valeur correspond au numéro de page, et **@url** dont la valeur et l'url de récupération de l'image de la page. 
+	- deux attributs sont ajoutés dans le fichier `.xml` créé, pour l'élément `Page` : **@id** dont la valeur correspond au numéro de page, et **@url** dont la valeur est l'url de récupération de l'image de la page. 
 
 A partir de cet export de fichiers XML-PAGE :  
 - `fromPAGEtoText.py` permet de transformer les fichiers XML-PAGE d'une collection en des fichiers de texte brut. Chaque sous-collection est traitée à part et donne lieu à la création d'un fichier dans le dossier `__TextExports__`. Les sauts de zones de texte et de pages sont signalés par des marqueurs dans les documents.  
