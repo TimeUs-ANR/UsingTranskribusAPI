@@ -1,6 +1,6 @@
 Un script pour interroger l'API de Transkribus et générer des fichiers XML-TEI et leur métadonnées.  
 
-- [Installation de l'environnemen virtuel](https://github.com/alix-tz/UsingTranskribusAPI/wiki/Cr%C3%A9er-l'environnement-virtuel-pour-utiliser-le-script)  
+- [Installation de l'environnement virtuel](https://github.com/alix-tz/UsingTranskribusAPI/wiki/Cr%C3%A9er-l'environnement-virtuel-pour-utiliser-le-script)  
 
 - `requestingTranskribus.py` permet de récupérer l'ensemble des transcriptions disponibles dans une collection donnée et dont le statut est "DONE". Les transcriptions sont disponible au format [format PAGE](http://www.primaresearch.org/tools/PAGELibraries). *Attention, le script ne télécharge pas l'image utilisée comme facsimilé par un fichier XML-PAGE.*  
 	- pour chaque sous-collection, un dossier est créé contenant un fichier `metadata.json`.  
