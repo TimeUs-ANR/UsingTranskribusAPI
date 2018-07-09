@@ -15,7 +15,7 @@ password = ''
 collectionnames = []
 
 # Targeted document status
-# values can only be : 'NEW', 'IN PROGRESS', 'DONE', 'FINAL' or 'GROUND TRUTH'
+# values can only be : 'NEW', 'IN PROGRESS', 'DONE' or 'FINAL'
 # ex : status = ['DONE', 'IN PROGRESS'] or status = ['FINAL']
 status = []
 
