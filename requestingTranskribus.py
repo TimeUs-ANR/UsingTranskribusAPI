@@ -23,8 +23,7 @@ def initiateLog():
 	collections = ""
 	for collection in collectionnames:
 		collections += "'%s' " % (collection)
-
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	intro = """
 	RETRIEVING PAGE-XML FILES AND METADATA FROM TRANSKRIBUS
 
@@ -41,7 +40,7 @@ def initiateLog():
 def createSeparationInLog():
 	""" Create a visual separation in the log file to distinguish collections
 	"""
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	separation = "\n =================================================== \n\n"
 	with open(filepath, "a") as f:
 		f.write(separation)
@@ -69,24 +68,20 @@ def createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfi
 	reportWhichPages = ""
 	if len(pagesnew) != 0:
 		pagesnew = str(pagesnew).strip('[]')
-#		" ".join(map(str, pagesnew))
 		reportWhichPages += "Following pages have status 'NEW': %s\n" % (pagesnew)
 	if len(pagesinprogress) != 0:
 		pagesinprogress = str(pagesinprogress).strip('[]')
-#		" ".join(map(str, pagesinprogress))
 		reportWhichPages += "Following pages have status 'IN PROGRESS': %s\n" % (pagesinprogress)
 	if len(pagesdone) != 0:
 		pagesdone = str(pagesdone).strip('[]')
-#		" ".join(map(str, pagesdone))
 		reportWhichPages += "Following pages have status 'DONE': %s\n" % (pagesdone)
 	if len(pagesfinal) != 0:
 		pagesfinal = str(pagesfinal).strip('[]')
-#		" ".join(map(str, pagesfinal))
 		reportWhichPages += "Following pages have status 'FINAL': %s\n" % (pagesfinal)
 
 	report = reportPages + reportStatus + reportWhichPages + errorlog
 
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	with open(filepath, "a") as f:
 		f.write(report)
 	return
@@ -107,7 +102,7 @@ def createtranscript(url, pagenr, pathtodoc):
 	else:
 		error = False
 		xml = response.text
-		filepath = "%s/%s.xml" % (pathtodoc, pagenr)
+		filepath = os.path.join(pathtodoc, "%s.xml") % (pagenr)
 		soup = BeautifulSoup(xml, "xml")
 		# Adding attributes to Page elements : @url and @id
 		# Attributes are not conform to Page standard but necessary for later treatment for Time Us project
@@ -175,14 +170,14 @@ def getmetadata(data):
 	docid = metadata["docId"]
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
-	pathtodoc = "%s/%s - %s" % (pathtocol, docid, documenttitle)
+	pathtodoc = os.path.join(pathtocol, "%s - %s") % (docid, documenttitle)
 
 	# Reporting
 	#print("Creating new folder in data/%s/ for document %s, if does not already exist." % (collectionname, documenttitle))
 	createFolder(pathtodoc)
 
 	# Create metadata.json file for document
-	filepath = "%s/metadata.json" % (pathtodoc)
+	filepath = os.path.join(pathtodoc, "metadata.json")
 	with open (filepath, 'w') as file:
 		text = json.dumps(metadata)
 		file.write(text)
@@ -296,13 +291,13 @@ if len(verifystatus) > 0:
 
 if len(status) > 0:
 	currentdirectory = os.path.dirname(os.path.abspath(__file__))
-	pathtodata = currentdirectory + "/data"
-	pathtologs = currentdirectory + "/__logs__"
+	pathtodata = os.path.join(currentdirectory, "data")
+	pathtologs = os.path.join(currentdirectory, "__logs__")
 	sessionid = getsessionid()
 	initiateLog()
 
 	for collectionname in collectionnames:
-		pathtocol = "%s/%s" % (pathtodata, collectionname)
+		pathtocol = os.path.join(pathtodata, collectionname)
 		
 		collectionid = getcollectionid(sessionid)
 		totalerrors = 0

@@ -22,7 +22,7 @@ def initiateLog():
 	collist = ""
 	for collection in collections:
 		collist = collist + "'%s' " % (collection)
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	intro = """
 	TRANSFORMING XML FILES (PAGE FORMAT) TO TEXT FILES
 
@@ -48,7 +48,7 @@ def createlog(counter, pagecounter, document):
 		else:
 			log = log + "\tFound %s .xml file(s) matching PAGE format.\n\n" % (pagecounter)
 
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	with open(filepath, "a") as f:
 		f.write(log)
 	return
@@ -59,12 +59,12 @@ def createlog(counter, pagecounter, document):
 now = datetime.datetime.now()
 timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 currentdirectory = os.path.dirname(os.path.abspath(__file__))
-pathtologs = "%s/__logs__" % (currentdirectory)
+pathtologs = os.path.join(currentdirectory, "__logs__")
 initiateLog()
 
 for collection in collections:
-	path = "%s/data/%s" % (currentdirectory, collection)
-	pathtotextexport = "%s/__TextExports__" % (path) 
+	path = os.path.join(currentdirectory, "data", collection)
+	pathtotextexport = os.path.join(path, "__TextExports__") 
 	createFolder(pathtotextexport)
 
 	# PREPARATION DES FICHIERS
@@ -78,7 +78,7 @@ for collection in collections:
 
 		if len(collectioncontent) > 0:
 			for document in collectioncontent:
-				pathtodoc = path + "/%s" % (document)
+				pathtodoc = os.path.join(path, document)
 				try: 
 					foldercontent = os.listdir(pathtodoc)
 					sortedcontent = []
@@ -94,7 +94,7 @@ for collection in collections:
 									sortedcontent.append(filename)
 						sortedcontent.sort()
 						if len(sortedcontent) > 0:
-							textfile = "%s/%s.txt" % (pathtotextexport, document)
+							textfile = os.path.join(pathtotextexport, "%s.txt") % document
 							with open(textfile, "w") as f:
 								f.write("")
 
@@ -110,7 +110,7 @@ for collection in collections:
 						for file in foldercontent:
 							pagenr = file.replace(".xml", "")
 
-							filepath = "%s/%s" % (pathtodoc, file)
+							filepath = os.path.join(pathtodoc, file)
 							with open(filepath, "r") as f:
 								content = f.read()
 							soup = BeautifulSoup(content, "xml")
