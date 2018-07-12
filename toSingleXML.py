@@ -6,23 +6,19 @@ from config import singlecollectionnames as collections
 # ========================== #
 
 def createFolder(directory):
-	"""Creates a new folder
-	source : https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
+	"""Create a new folder
+	:param directory: directory name or path to directory
+	:type directory: string
 	"""
-	try:
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-	except OSError as e:
-		print(e)
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 	return
 
 
 def initiateLog():
 	"""Initiates a log file with a timestamp
 	"""
-	collist = ""
-	for collection in collections:
-		collist = collist + "'%s' " % (collection)
+	collist = ' '.join(["'%s'" %collection for collection in collections])
 	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	intro = """
 	BUILDING SINGLE XML DOCUMENT(PAGE FORMAT) FROM MULTIPLE XML FILES
@@ -80,8 +76,7 @@ for collection in collections:
 							sortedcontent = []
 
 							if len(foldercontent) > 0:
-								# METTRE LES FICHIERS XML DANS L'ORDRE
-								# transformer les noms de fichiers en integer quand c'est possible
+								# ORDERING XML FILES
 								for filename in foldercontent:
 									if filename.endswith(".xml"):
 										filename = filename.replace(".xml", "")
@@ -92,11 +87,8 @@ for collection in collections:
 								# SORT
 								sortedcontent.sort()
 								# REBUILD FILE NAMES
-								foldercontent = []
-								for filename in sortedcontent:
-									filename = "%s.xml" % (filename)
-									foldercontent.append(filename)
-
+								foldercontent = [str(filename) + ".xml" for filename in sortedcontent]
+								counter = len(foldercontent)
 								pathtoexport = os.path.join(pathtoexports, "%s.xml") % (document)
 								# CREATE CONTENT FOR THE NEW FILE
 								# CREATE HEADER
@@ -108,9 +100,12 @@ for collection in collections:
 										content = f.read()
 									soup = BeautifulSoup(content, "xml")
 									if soup.PcGts:
-										intro = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd"  xmlns:tu="timeUs">"""
+										meta = str(soup.Metadata)
+										soup.Page.decompose()
+										soup.Metadata.decompose()
+										intro = str(soup).split("\n")
 										# CREATING an element PageGrp not conform to PAGE standard in timeUs namespace
-										header = intro + str(soup.Metadata) + "\n<tu:PageGrp>"
+										header = "%s\n%s\n%s\n<tu:PageGrp>" % (intro[0], intro[1], meta)
 										with open(pathtoexport, "w") as f:
 											f.write(header)
 										needend = True

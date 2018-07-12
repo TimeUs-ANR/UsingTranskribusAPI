@@ -6,23 +6,18 @@ from config import username, password, collectionnames, status
 
 def createFolder(directory):
 	""" Create a new folder
-	source : https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
-	:param directory: string
+	:param directory: directory name or path to directory
+	:type directory: string
 	"""
-	try: 
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-	except OSError:
-		print("Creating new directory. %s" % (directory))
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 	return
 
 # ------- LOGS -------
 def initiateLog():
 	""" Initiate a log file with a timestamp
 	"""
-	collections = ""
-	for collection in collectionnames:
-		collections += "'%s' " % (collection)
+	collections = ' '.join(["'%s'" %collection for collection in collectionnames])
 	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	intro = """
 	RETRIEVING PAGE-XML FILES AND METADATA FROM TRANSKRIBUS
@@ -56,12 +51,13 @@ def createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfi
 	:param pagesfinal: list
 	:param errorlog: string
 	"""
-	nrOfPages = data["md"]["nrOfPages"]
-	title = data["md"]["title"]
-	nrOfNew = data["md"]["nrOfNew"]
-	nrOfInProgress = data["md"]["nrOfInProgress"]
-	nrOfDone = data["md"]["nrOfDone"]
-	nrOfFinal = data["md"]["nrOfFinal"]
+	data = data["md"]
+	nrOfPages = data["nrOfPages"]
+	title = data["title"]
+	nrOfNew = data["nrOfNew"]
+	nrOfInProgress = data["nrOfInProgress"]
+	nrOfDone = data["nrOfDone"]
+	nrOfFinal = data["nrOfFinal"]
 
 	reportPages = "\nDocument '%s' contains %s pages.\n" % (title, nrOfPages)
 	reportStatus = "New: %s\nIn Progress: %s\nDone: %s\nFinal:%s\n" % (nrOfNew, nrOfInProgress, nrOfDone, nrOfFinal)
@@ -217,10 +213,8 @@ def getcollectionid(sessionid):
 	json_file = json.loads(response.text)
 
 	collectionid = ''
-
-	for collection in json_file:
-		name = collection['colName'] 
-		if name == collectionname:
+	for collection in json_file: 
+		if collection['colName'] == collectionname:
 			collectionid = collection['colId']
 
 	# Reporting 
@@ -241,12 +235,7 @@ def getdocumentid(sessionid, collectionid):
 	querystring = {"JSESSIONID":sessionid}
 	response = requests.request("GET", url, params=querystring)
 	json_file = json.loads(response.text)
-
-	doclist = []
-
-	for document in json_file:
-		docId = document["docId"]
-		doclist.append(docId)
+	doclist = [document["docId"] for document in json_file]
 
 	# Reporting
 	idreport = ", ".join(map(str, doclist))
@@ -284,11 +273,9 @@ for stat in status:
 		print("Warning! %s is not a valid satus" % (stat))
 		verifystatus.append(stat)
 if len(verifystatus) > 0:
-	for wrong in verifystatus:
-		status.remove(wrong)
+	[status.remove(wrong) for wrong in verifystatus]
 	if len(status) > 0:
-		strstatus = str(status).strip('[]')
-		print("Working with valid status: %s" % (strstatus))
+		print("Working with valid status: %s" % (str(status).strip('[]')))
 
 if len(status) > 0:
 	currentdirectory = os.path.dirname(os.path.abspath(__file__))
