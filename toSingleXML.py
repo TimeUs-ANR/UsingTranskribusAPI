@@ -108,8 +108,9 @@ for collection in collections:
 										content = f.read()
 									soup = BeautifulSoup(content, "xml")
 									if soup.PcGts:
-										intro = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">"""
-										header = intro + str(soup.Metadata) + "\n<PageGrp>"
+										intro = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd"  xmlns:tu="timeUs">"""
+										# CREATING an element PageGrp not conform to PAGE standard in timeUs namespace
+										header = intro + str(soup.Metadata) + "\n<tu:PageGrp>"
 										with open(pathtoexport, "w") as f:
 											f.write(header)
 										needend = True
@@ -130,7 +131,7 @@ for collection in collections:
 								# CLOSE LAST TAGNAMES
 								if needend is True:
 									with open(pathtoexport, "a") as f:
-										f.write("\n</PageGrp>\n</PcGts>")
+										f.write("\n</tu:PageGrp>\n</PcGts>")
 									log = "Created 1 mashup file for '%s', from a total of %s file(s).\n" % (document, counter)
 									createlog(log)
 						except Exception as e:

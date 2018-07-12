@@ -104,11 +104,12 @@ def createtranscript(url, pagenr, pathtodoc):
 		xml = response.text
 		filepath = os.path.join(pathtodoc, "%s.xml") % (pagenr)
 		soup = BeautifulSoup(xml, "xml")
-		# Adding attributes to Page elements : @url and @id
-		# Attributes are not conform to Page standard but necessary for later treatment for Time Us project
+		# Adding namespace declaration for element added by Time Us project
+		# Adding attributes to Page elements : @timeUs:url and @itmeUs:id
 		if soup.PcGts:
-			soup.Page["url"] = url
-			soup.Page["id"] = pagenr
+			soup.PcGts["xmlns:tu"] = "timeUs"
+			soup.Page["tu:url"] = url
+			soup.Page["tu:id"] = pagenr
 			with open(filepath, "w") as f:
 				f.write(str(soup))
 	return error
@@ -154,7 +155,7 @@ def gettranscripts(data, pathtodoc):
 				pagesfinal.append(pagenr)
 
 	if errors == 0:
-		errorlog = "No server error while retrieving xml files.\n"
+		errorlog = "\n"
 	else:
 		errorlog = "%s server error(s) while retreiving xml files.\n" % (errors)
 	createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfinal)
