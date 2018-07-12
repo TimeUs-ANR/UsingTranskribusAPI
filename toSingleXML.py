@@ -23,7 +23,7 @@ def initiateLog():
 	collist = ""
 	for collection in collections:
 		collist = collist + "'%s' " % (collection)
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	intro = """
 	BUILDING SINGLE XML DOCUMENT(PAGE FORMAT) FROM MULTIPLE XML FILES
 
@@ -40,7 +40,7 @@ def initiateLog():
 def createlog(log):
 	""" Add logs to current log file
 	"""
-	filepath = "%s/log-%s.txt" % (pathtologs, timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
 	with open(filepath, "a") as f:
 		f.write(log)
 	return
@@ -50,13 +50,13 @@ def createlog(log):
 now = datetime.datetime.now()
 timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 currentdirectory = os.path.dirname(os.path.abspath(__file__))
-datacontent = "%s/data" % (currentdirectory)
-pathtologs = "%s/__logs__" % (currentdirectory)
+datacontent = os.path.join(currentdirectory, "data")
+pathtologs = os.path.join(currentdirectory, "__logs__")
 initiateLog()
 
 for collection in collections:
-	path = "%s/data/%s" % (currentdirectory, collection)
-	pathtoexports = "%s/__AllInOne__" % (path) 
+	path = os.path.join(datacontent, collection)
+	pathtoexports = os.path.join(path, "__AllInOne__")
 
 	# PREPARING FILES
 	try: 
@@ -74,7 +74,7 @@ for collection in collections:
 					for document in collectioncontent:
 						needend = False
 						counter = 0
-						pathtodoc = "%s/%s" % (path, document)
+						pathtodoc = os.path.join(path, document)
 						try:
 							foldercontent = os.listdir(pathtodoc)
 							sortedcontent = []
@@ -97,13 +97,13 @@ for collection in collections:
 									filename = "%s.xml" % (filename)
 									foldercontent.append(filename)
 
-								pathtoexport = "%s/%s.xml" % (pathtoexports, document)
+								pathtoexport = os.path.join(pathtoexports, "%s.xml") % (document)
 								# CREATE CONTENT FOR THE NEW FILE
 								# CREATE HEADER
 								i = 0
 								top = len(foldercontent)
 								while i != top:
-									firstpagefile = "%s/%s" % (pathtodoc, foldercontent[i])
+									firstpagefile = os.path.join(pathtodoc, foldercontent[i])
 									with open(firstpagefile, "r") as f:
 										content = f.read()
 									soup = BeautifulSoup(content, "xml")
@@ -118,11 +118,11 @@ for collection in collections:
 										i += 1
 								# CREATE CONTENT
 								for file in foldercontent:
-									filepath = "%s/%s" % (pathtodoc, file)
+									filepath = os.path.join(pathtodoc, file)
 									with open(filepath, "r") as f:
 										content = f.read()
 									soup = BeautifulSoup(content, "xml")
-									if soup.PcGts:
+									if soup.PcGts :
 										counter += 1
 										page = soup.Page									
 										with open(pathtoexport, "a") as f:
