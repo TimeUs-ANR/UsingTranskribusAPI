@@ -5,20 +5,20 @@ from config import textcollectionnames as collections
 # ========================== #
 
 def createFolder(directory):
-	"""Create a new folder
-	:param directory: directory name or path to directory
+	"""Create a new folder.
+
+	:param directory: path to new directory
 	:type directory: string
 	"""
 	if not os.path.exists(directory):
 		os.makedirs(directory)
-	return
 
 
 def initiateLog():
-	"""Initiates a log file with a timestamp
+	"""Initiate a log file in __logs__ directory, name after a timestamp.
 	"""
 	collist = ' '.join(["'%s'" %collection for collection in collections])
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	intro = """
 	TRANSFORMING XML FILES (PAGE FORMAT) TO TEXT FILES
 
@@ -29,11 +29,17 @@ def initiateLog():
 """ % (now, collist)
 	with open(filepath, "w") as f:
 		f.write(intro)
-	return
 
 
 def createlog(counter, pagecounter, document):
-	""" Add logs to current log file
+	"""Create simple reports in log file.
+
+	:param counter: number of xml files in document/subcollection directory.
+	:param pagecounter: number of xml-page files in document/subcollection directory.
+	:param document: name of document/subcollection directory.
+	:type counter: integer
+	:type pagecounter: integer
+	:type document: string
 	"""
 	if counter == 0:
 		log = "No .xml file in '%s' directory.\n\n" % (document)
@@ -43,16 +49,15 @@ def createlog(counter, pagecounter, document):
 			log = log + "\tNo .xml file matched PAGE format (root must be '<PcGts>'.\n\n"
 		else:
 			log = log + "\tFound %s .xml file(s) matching PAGE format.\n\n" % (pagecounter)
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	with open(filepath, "a") as f:
 		f.write(log)
-	return
 
 
 # ========================== #
 
 now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+TIMESTAMP = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 currentdirectory = os.path.dirname(os.path.abspath(__file__))
 pathtologs = os.path.join(currentdirectory, "__logs__")
 initiateLog()

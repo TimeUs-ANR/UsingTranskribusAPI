@@ -5,20 +5,20 @@ from config import username, password, collectionnames, status
 # ======================= #
 
 def createFolder(directory):
-	""" Create a new folder
-	:param directory: directory name or path to directory
+	"""Create a new folder.
+
+	:param directory: path to new directory
 	:type directory: string
 	"""
 	if not os.path.exists(directory):
 		os.makedirs(directory)
-	return
 
 # ------- LOGS -------
 def initiateLog():
-	""" Initiate a log file with a timestamp
+	"""Initiate a log file in __logs__ directory, name after a timestamp.
 	"""
 	collections = ' '.join(["'%s'" %collection for collection in collectionnames])
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	intro = """
 	RETRIEVING PAGE-XML FILES AND METADATA FROM TRANSKRIBUS
 
@@ -29,27 +29,31 @@ def initiateLog():
 	\n""" % (now, collections)
 	with open(filepath, "w") as f:
 		f.write(intro)
-	return
 
 
 def createSeparationInLog():
-	""" Create a visual separation in the log file to distinguish collections
+	"""Create a visual separation in log file.
 	"""
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	separation = "\n =================================================== \n\n"
 	with open(filepath, "a") as f:
 		f.write(separation)
-	return
 
 
 def createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfinal):
-	""" Create simple reports for each document in a collection
-	:param data: dict
-	:param pagesnew: list
-	:param pagesinprogress: list
-	:param pagesdone: list
-	:param pagesfinal: list
-	:param errorlog: string
+	"""Create simple reports in log file.
+
+	:param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
+	:param pagesnew: list of page numbers matching "NEW" status.
+	:param pagesinprogress: list of page numbers matching "IN PROGRESS" status.
+	:param pagesdone: list of page numbers matching "DONE" status.
+	:param pagesfinal: list of page numbers matching "FINAL" status.
+	:param errorlog: message on server errors, can be empty string.
+	:type data: dict
+	:type pagesnew: list
+	:type pagesinprogress: list
+	:type pagesfinal: list
+	:type errorlog: string
 	"""
 	data = data["md"]
 	nrOfPages = data["nrOfPages"]
@@ -77,20 +81,24 @@ def createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfi
 
 	report = reportPages + reportStatus + reportWhichPages + errorlog
 
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	with open(filepath, "a") as f:
 		f.write(report)
-	return
+
 
 # ------- CREATE FILES ------
 
 def createtranscript(url, pagenr, pathtodoc):
-	"""Create a new xml file containing the transcript given by Transkribus for a page, in PAGE standard. 
-	File is name after corresponding page number.
-	:param url: string
-	:param pagenr: integer
-	:param pathtodoc: string
-	:return: boolean
+	"""Create xml file containing a page transcript from Transkribus, in PAGE standard. File is name after corresponding page number.
+
+	:param url: url to request transcript, provided by Transkribus.
+	:param pagenr: current page number.
+	:param pathtodoc: path to directory for the current document/subcollection.
+	:type url: string
+	:type pagenr: integer
+	:type pathtodoc: string
+	:return: a status to signal possible server errors.
+	:rtype: boolean
 	"""
 	response = requests.request("GET", url)
 	if response.status_code == 503:
@@ -112,10 +120,14 @@ def createtranscript(url, pagenr, pathtodoc):
 
 
 def gettranscripts(data, pathtodoc):
-	""" Identify page transcripts matching targeted status
-	:param data: dict
-	:param pathtodoc: string
-	:return: integer
+	"""Identify page numbers matching targeted status.
+
+	:param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
+	:param pathtodoc: path to directory for the current document/subcollection.
+	:type data: dict
+	:type pathtodoc: string
+	:return: sum of all signals of server errors on pages in current document/subcollection.
+	:rtype: integer
 	"""
 	pagesnew = []
 	pagesinprogress = []
@@ -140,7 +152,6 @@ def gettranscripts(data, pathtodoc):
 			error = createtranscript(url, pagenr, pathtodoc)
 			if error is True:
 				errors += 1
-
 			if pagestat == "NEW":
 				pagesnew.append(pagenr)
 			elif pagestat == "IN PROGRESS":
@@ -149,7 +160,6 @@ def gettranscripts(data, pathtodoc):
 				pagesdone.append(pagenr)
 			elif pagestat == "FINAL":
 				pagesfinal.append(pagenr)
-
 	if errors == 0:
 		errorlog = "\n"
 	else:
@@ -159,20 +169,19 @@ def gettranscripts(data, pathtodoc):
 
 
 def getmetadata(data):
-	"""Create a new json file containing the document's metadata in the corresponding folder
-	:param data: dict (json file)
-	:return: string
+	"""Create JSON file containing document/subcollection's metadata in collection's directory.
+
+	:param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
+	:type data: dict
+	:return: path to directory for the current document/subcollection.
+	:rtype: string
 	"""
 	metadata = data["md"]
 	docid = metadata["docId"]
 	documenttitle = metadata["title"]
 	documenttitle = documenttitle.replace("/", "-")
 	pathtodoc = os.path.join(pathtocol, "%s - %s") % (docid, documenttitle)
-
-	# Reporting
-	#print("Creating new folder in data/%s/ for document %s, if does not already exist." % (collectionname, documenttitle))
 	createFolder(pathtodoc)
-
 	# Create metadata.json file for document
 	filepath = os.path.join(pathtodoc, "metadata.json")
 	with open (filepath, 'w') as file:
@@ -183,8 +192,10 @@ def getmetadata(data):
 
 # ------- REQUESTS ------- 
 def getsessionid():
-	"""Use Transkribus API login tools and returns a session code
-	:return: string
+	"""Request Transkribus API to authentificate.
+
+	:return: session id for authentification.
+	:rtype: string
 	"""
 	url = "https://transkribus.eu/TrpServer/rest/auth/login"
 	payload = 'user=' + username + '&' + 'pw=' + password
@@ -203,9 +214,12 @@ def getsessionid():
 
 
 def getcollectionid(sessionid):
-	""" Use Trankribus API to list collections accessible on the session and retrieve the ID of the targeted collection and rertuns that ID
-	:param sessionid: string
-	:return: string
+	"""Request Trankribus API to list collections accessible for current user and retrieve id of targeted collection.
+	
+	:param sessionid: session id for authentification.
+	:type sessionid: string
+	:return: numerical id for targeted collection.
+	:rtype: integer
 	"""
 	url = "https://transkribus.eu/TrpServer/rest/collections/list"
 	querystring = {"JSESSIONID":sessionid}
@@ -226,10 +240,14 @@ def getcollectionid(sessionid):
 
 
 def getdocumentid(sessionid, collectionid):
-	""" Use Transkribus API to get a list of document ID in the targeted collection and returns that list
-	:param sessionid: string
-	:param collectionid: string
-	:return: list
+	"""Request Transkribus API to list documents/subcollections in targeted collection.
+	
+	:param sessionid: session id for authentification.
+	:param collectionid: numerical id for targeted collection.
+	:type sessionid: string
+	:type collectionid: integer
+	:return: list of numerical id for documents/subcollections in targeted collection.
+	:rtype: list
 	"""
 	url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % (collectionid)
 	querystring = {"JSESSIONID":sessionid}
@@ -243,11 +261,16 @@ def getdocumentid(sessionid, collectionid):
 	return doclist
 
 def getdocumentpages(sessionid, collectionid, documentid):
-	""" Use Transkribus API to get a json file with metadata and transcriptions, alos keep track of server errors for report
-	:param sessionid: string
-	:param collectionid: string
-	:param documentid: string
-	:return: integer
+	"""Request Transkribus API to get document/subcollection's metadata.
+	
+	:param sessionid: session id for authentification.
+	:param collectionid: numerical id for targeted collection.
+	:param documentid: numerical id for document/subcollection in targeted collection.
+	:type sessionid: string
+	:type collectioid: integer
+	:type documentid: integer
+	:return: sum of all signals of server errors for current document/subcollection.
+	:rtype: integer
 	"""
 	totalerrors = 0
 	url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" %(collectionid, documentid)
@@ -265,7 +288,7 @@ def getdocumentpages(sessionid, collectionid, documentid):
 # ======================= #
 
 now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+TIMESTAMP = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 
 verifystatus = []
 for stat in status:

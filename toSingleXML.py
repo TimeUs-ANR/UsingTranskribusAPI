@@ -6,20 +6,20 @@ from config import singlecollectionnames as collections
 # ========================== #
 
 def createFolder(directory):
-	"""Create a new folder
-	:param directory: directory name or path to directory
+	"""Create a new folder.
+
+	:param directory: path to new directory
 	:type directory: string
 	"""
 	if not os.path.exists(directory):
 		os.makedirs(directory)
-	return
 
 
 def initiateLog():
-	"""Initiates a log file with a timestamp
+	"""Initiate a log file in __logs__ directory, name after a timestamp.
 	"""
 	collist = ' '.join(["'%s'" %collection for collection in collections])
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	intro = """
 	BUILDING SINGLE XML DOCUMENT(PAGE FORMAT) FROM MULTIPLE XML FILES
 
@@ -30,21 +30,23 @@ def initiateLog():
 """ % (now, collist)
 	with open(filepath, "w") as f:
 		f.write(intro)
-	return
 
 
 def createlog(log):
-	""" Add logs to current log file
+	"""Add log to current log file.
+
+	:param log: report identifying mashed up files.
+	:type log: string
 	"""
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
+	filepath = os.path.join(pathtologs, "log-%s.txt") % (TIMESTAMP)
 	with open(filepath, "a") as f:
 		f.write(log)
-	return
+
 
 # ========================== #
 
 now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+TIMESTAMP = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 currentdirectory = os.path.dirname(os.path.abspath(__file__))
 datacontent = os.path.join(currentdirectory, "data")
 pathtologs = os.path.join(currentdirectory, "__logs__")
