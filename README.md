@@ -11,4 +11,7 @@ Un script pour interroger l'API de Transkribus et générer des fichiers XML-TEI
 A partir de cet export de fichiers XML-PAGE :  
 - `fromPAGEtoText.py` permet de transformer les fichiers XML-PAGE d'une collection en des fichiers de texte brut. Chaque sous-collection est traitée à part et donne lieu à la création d'un fichier dans le dossier `__TextExports__`. Les sauts de zones de texte et de pages sont signalés par des marqueurs dans les documents.  
 
-- `toSingleXML.py` permet de rassembler les fichiers XML-PAGE qui composent une sous-collection en un seul fichier. Chaque sous-collection est traitée à part et donne lieu à la création d'un fichier dans le dossier `__AllInOne__`. *Attention, Un élément `<PageGrp>` a été ajouté pour rassembler tous les éléments `<Page>` et leur contenu ; il n'est pas conforme au schéma PAGE original.*  
+- `toSingleXML.py` permet de rassembler les fichiers XML-PAGE qui composent une sous-collection en un seul fichier. Chaque sous-collection est traitée à part et donne lieu à la création d'un fichier dans le dossier `__AllInOne__`. *Attention, Un élément `<tu:PageGrp>` a été ajouté pour rassembler tous les éléments `<Page>` et leur contenu ; il n'est pas conforme au schéma PAGE original.*  
+
+## Pour transformer les fichiers XML-PAGE obtenus en fichier XML-TEI conformes
+- [page2tei_TimeUS](https://github.com/alix-tz/page2tei_TimeUS)
