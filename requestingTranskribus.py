@@ -49,7 +49,7 @@ def createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfi
 	:param pagesdone: list of page numbers matching "DONE" status.
 	:param pagesfinal: list of page numbers matching "FINAL" status.
 	:param errorlog: message on server errors, can be empty string.
-	:type data: dict
+	:type data: dictionnary
 	:type pagesnew: list
 	:type pagesinprogress: list
 	:type pagesfinal: list
@@ -124,7 +124,7 @@ def gettranscripts(data, pathtodoc):
 
 	:param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
 	:param pathtodoc: path to directory for the current document/subcollection.
-	:type data: dict
+	:type data: dictionnary
 	:type pathtodoc: string
 	:return: sum of all signals of server errors on pages in current document/subcollection.
 	:rtype: integer
@@ -172,7 +172,7 @@ def getmetadata(data):
 	"""Create JSON file containing document/subcollection's metadata in collection's directory.
 
 	:param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
-	:type data: dict
+	:type data: dictionnary
 	:return: path to directory for the current document/subcollection.
 	:rtype: string
 	"""
