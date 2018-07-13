@@ -1,146 +1,138 @@
-import os, datetime
+import os
+import datetime
 from bs4 import BeautifulSoup
-import lxml.etree as etree
-from config import singlecollectionnames as collections
-
-# ========================== #
-
-def createFolder(directory):
-	"""Creates a new folder
-	source : https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
-	"""
-	try:
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-	except OSError as e:
-		print(e)
-	return
+from config import singlecollectionnames as collection_list
 
 
-def initiateLog():
-	"""Initiates a log file with a timestamp
-	"""
-	collist = ""
-	for collection in collections:
-		collist = collist + "'%s' " % (collection)
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
-	intro = """
-	BUILDING SINGLE XML DOCUMENT(PAGE FORMAT) FROM MULTIPLE XML FILES
+def create_folder(directory):
+    """Create a new folder.
 
-	Script ran at : %s
-	For collection %s.
+    :param directory: path to new directory
+    :type directory: string
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-	---------------------
+
+def initiate_log():
+    """Initiate a log file in __logs__ directory, name after a timestamp.
+    """
+    collist = ' '.join(["'%s'" % collection for collection in collection_list])
+    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    intro = """
+    BUILDING SINGLE XML DOCUMENT(PAGE FORMAT) FROM MULTIPLE XML FILES
+    
+    Script ran at : %s
+    For collection %s.
+    
+    ---------------------
 """ % (now, collist)
-	with open(filepath, "w") as f:
-		f.write(intro)
-	return
+    with open(path_to_file, "w") as f:
+        f.write(intro)
 
 
-def createlog(log):
-	""" Add logs to current log file
-	"""
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
-	with open(filepath, "a") as f:
-		f.write(log)
-	return
+def create_log(log):
+    """Add log to current log file.
+
+    :param log: report identifying mashed up files.
+    :type log: string
+    """
+    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    with open(path_to_file, "a") as f:
+        f.write(log)
+
 
 # ========================== #
 
 now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
-currentdirectory = os.path.dirname(os.path.abspath(__file__))
-datacontent = os.path.join(currentdirectory, "data")
-pathtologs = os.path.join(currentdirectory, "__logs__")
-initiateLog()
+TIMESTAMP = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+cwd = os.path.dirname(os.path.abspath(__file__))
+path_to_data = os.path.join(cwd, "data")
+path_to_logs = os.path.join(cwd, "__logs__")
+initiate_log()
 
-for collection in collections:
-	path = os.path.join(datacontent, collection)
-	pathtoexports = os.path.join(path, "__AllInOne__")
+for collection in collection_list:
+    path = os.path.join(path_to_data, collection)
+    path_to_xml_mashup = os.path.join(path, "__AllInOne__")
 
-	# PREPARING FILES
-	try: 
-		verifycollections = os.listdir(datacontent)
-		if collection in verifycollections:
-			createFolder(pathtoexports)
-			try:
-				collectioncontent = os.listdir(path)
-				if "__TextExports__" in collectioncontent:
-					collectioncontent.remove("__TextExports__")
-				if "__AllInOne__" in collectioncontent:
-					collectioncontent.remove("__AllInOne__")
+    # PREPARING FILES
+    try:
+        data_content = os.listdir(path_to_data)
+        try:
+            collection_content = os.listdir(path)
+            if "__TextExports__" in collection_content:
+                collection_content.remove("__TextExports__")
+            if "__AllInOne__" in collection_content:
+                collection_content.remove("__AllInOne__")
 
-				if len(collectioncontent) > 0:
-					for document in collectioncontent:
-						needend = False
-						counter = 0
-						pathtodoc = os.path.join(path, document)
-						try:
-							foldercontent = os.listdir(pathtodoc)
-							sortedcontent = []
+            if len(collection_content) > 0:
+                create_folder(path_to_xml_mashup)
+                for document in collection_content:
+                    need_end = False
+                    counter = 0
+                    path_to_doc = os.path.join(path, document)
+                    try:
+                        folder_content = os.listdir(path_to_doc)
+                        sorted_content = []
+                        # ORDERING XML FILES
+                        if len(folder_content) > 0:
+                            for filename in [f for f in folder_content if f.endswith(".xml")]:
+                                filename, ext = os.path.splitext(filename)
+                                try:
+                                    sorted_content.append(int(filename))
+                                except TypeError:
+                                    sorted_content.append(filename)
+                            sorted_content.sort()
+                            # REBUILD FILE NAMES
+                            folder_content = [str(filename) + ".xml" for filename in sorted_content]
+                            counter = len(folder_content)
 
-							if len(foldercontent) > 0:
-								# METTRE LES FICHIERS XML DANS L'ORDRE
-								# transformer les noms de fichiers en integer quand c'est possible
-								for filename in foldercontent:
-									if filename.endswith(".xml"):
-										filename = filename.replace(".xml", "")
-										try:
-											sortedcontent.append(int(filename))
-										except:
-											sortedcontent.append(filename)
-								# SORT
-								sortedcontent.sort()
-								# REBUILD FILE NAMES
-								foldercontent = []
-								for filename in sortedcontent:
-									filename = "%s.xml" % (filename)
-									foldercontent.append(filename)
-
-								pathtoexport = os.path.join(pathtoexports, "%s.xml") % (document)
-								# CREATE CONTENT FOR THE NEW FILE
-								# CREATE HEADER
-								i = 0
-								top = len(foldercontent)
-								while i != top:
-									firstpagefile = os.path.join(pathtodoc, foldercontent[i])
-									with open(firstpagefile, "r") as f:
-										content = f.read()
-									soup = BeautifulSoup(content, "xml")
-									if soup.PcGts:
-										intro = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd"  xmlns:tu="timeUs">"""
-										# CREATING an element PageGrp not conform to PAGE standard in timeUs namespace
-										header = intro + str(soup.Metadata) + "\n<tu:PageGrp>"
-										with open(pathtoexport, "w") as f:
-											f.write(header)
-										needend = True
-										i = top
-									else:
-										i += 1
-								# CREATE CONTENT
-								for file in foldercontent:
-									filepath = os.path.join(pathtodoc, file)
-									with open(filepath, "r") as f:
-										content = f.read()
-									soup = BeautifulSoup(content, "xml")
-									if soup.PcGts :
-										counter += 1
-										page = soup.Page									
-										with open(pathtoexport, "a") as f:
-											f.write("\n" + str(page))
-								# CLOSE LAST TAGNAMES
-								if needend is True:
-									with open(pathtoexport, "a") as f:
-										f.write("\n</tu:PageGrp>\n</PcGts>")
-									log = "Created 1 mashup file for '%s', from a total of %s file(s).\n" % (document, counter)
-									createlog(log)
-						except Exception as e:
-							print(e)
-			except Exception as e:
-							print(e)
-		else:
-			print("No such collection name in data directory!")
-	except Exception as e:
-		print(e)
-
-
+                            path_to_export = os.path.join(path_to_xml_mashup, "%s.xml") % document
+                            # CREATE CONTENT FOR THE NEW FILE
+                            # CREATE HEADER
+                            i = 0
+                            top = len(folder_content)
+                            while i != top:
+                                ispagefile = os.path.join(path_to_doc, folder_content[i])
+                                with open(ispagefile, "r") as f:
+                                    content = f.read()
+                                soup = BeautifulSoup(content, "xml")
+                                if soup.PcGts:
+                                    meta = str(soup.Metadata)
+                                    soup.Page.decompose()
+                                    soup.Metadata.decompose()
+                                    intro = str(soup).split("\n")
+                                    # CREATING an element PageGrp not conform to PAGE standard in timeUs namespace
+                                    header = "%s\n%s\n%s\n<tu:PageGrp>" % (intro[0], intro[1], meta)
+                                    with open(path_to_export, "w") as f:
+                                        f.write(header)
+                                    need_end = True
+                                    i = top
+                                else:
+                                    i += 1
+                            # CREATE CONTENT
+                            for file in folder_content:
+                                path_to_file = os.path.join(path_to_doc, file)
+                                with open(path_to_file, "r") as f:
+                                    content = f.read()
+                                soup = BeautifulSoup(content, "xml")
+                                if soup.PcGts:
+                                    counter += 1
+                                    page = soup.Page
+                                    with open(path_to_export, "a") as f:
+                                        f.write("\n" + str(page))
+                            # CLOSE LAST TAGNAMES
+                            if need_end is True:
+                                with open(path_to_export, "a") as f:
+                                    f.write("\n</tu:PageGrp>\n</PcGts>")
+                                log = "Created 1 mashup file for '%s', from a total of %s file(s).\n" % (
+                                    document, counter)
+                                create_log(log)
+                    except Exception as e:
+                        print(e)
+            else:
+                print("No file to transform in collection named '%s'." % collection)
+        except Exception as e:
+            print(e)
+    except Exception as e:
+        print(e)

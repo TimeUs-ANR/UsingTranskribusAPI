@@ -1,319 +1,337 @@
-import requests, json, os, datetime
+import requests
+import json
+import os
+import datetime
 from bs4 import BeautifulSoup
-from config import username, password, collectionnames, status
+from config import username, password, status
+from config import collectionnames as collection_list
 
-# ======================= #
 
-def createFolder(directory):
-	""" Create a new folder
-	source : https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
-	:param directory: string
-	"""
-	try: 
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-	except OSError:
-		print("Creating new directory. %s" % (directory))
-	return
+def create_folder(directory):
+    """Create a new folder.
+
+    :param directory: path to new directory
+    :type directory: string
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 
 # ------- LOGS -------
-def initiateLog():
-	""" Initiate a log file with a timestamp
-	"""
-	collections = ""
-	for collection in collectionnames:
-		collections += "'%s' " % (collection)
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
-	intro = """
-	RETRIEVING PAGE-XML FILES AND METADATA FROM TRANSKRIBUS
-
-	Script ran at: %s
-	For collection(s): %s
-
-	---------------------
-	\n""" % (now, collections)
-	with open(filepath, "w") as f:
-		f.write(intro)
-	return
 
 
-def createSeparationInLog():
-	""" Create a visual separation in the log file to distinguish collections
-	"""
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
-	separation = "\n =================================================== \n\n"
-	with open(filepath, "a") as f:
-		f.write(separation)
-	return
+def initiate_log():
+    """Initiate a log file in __logs__ directory, name after a timestamp.
+    """
+    collections = ' '.join(["'%s'" % collection for collection in collection_list])
+    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    intro = """
+    RETRIEVING PAGE-XML FILES AND METADATA FROM TRANSKRIBUS
+
+    Script ran at: %s
+    For collection(s): %s
+
+    ---------------------
+    \n""" % (now, collections)
+    with open(path_to_file, "w") as f:
+        f.write(intro)
 
 
-def createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfinal):
-	""" Create simple reports for each document in a collection
-	:param data: dict
-	:param pagesnew: list
-	:param pagesinprogress: list
-	:param pagesdone: list
-	:param pagesfinal: list
-	:param errorlog: string
-	"""
-	nrOfPages = data["md"]["nrOfPages"]
-	title = data["md"]["title"]
-	nrOfNew = data["md"]["nrOfNew"]
-	nrOfInProgress = data["md"]["nrOfInProgress"]
-	nrOfDone = data["md"]["nrOfDone"]
-	nrOfFinal = data["md"]["nrOfFinal"]
+def create_separation_in_log():
+    """Create a visual separation in log file.
+    """
+    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    separation = "\n =================================================== \n\n"
+    with open(path_to_file, "a") as f:
+        f.write(separation)
 
-	reportPages = "\nDocument '%s' contains %s pages.\n" % (title, nrOfPages)
-	reportStatus = "New: %s\nIn Progress: %s\nDone: %s\nFinal:%s\n" % (nrOfNew, nrOfInProgress, nrOfDone, nrOfFinal)
-	reportWhichPages = ""
-	if len(pagesnew) != 0:
-		pagesnew = str(pagesnew).strip('[]')
-		reportWhichPages += "Following pages have status 'NEW': %s\n" % (pagesnew)
-	if len(pagesinprogress) != 0:
-		pagesinprogress = str(pagesinprogress).strip('[]')
-		reportWhichPages += "Following pages have status 'IN PROGRESS': %s\n" % (pagesinprogress)
-	if len(pagesdone) != 0:
-		pagesdone = str(pagesdone).strip('[]')
-		reportWhichPages += "Following pages have status 'DONE': %s\n" % (pagesdone)
-	if len(pagesfinal) != 0:
-		pagesfinal = str(pagesfinal).strip('[]')
-		reportWhichPages += "Following pages have status 'FINAL': %s\n" % (pagesfinal)
 
-	report = reportPages + reportStatus + reportWhichPages + errorlog
+def create_log_entry(data, error_log, pages_new, pages_inprogress, pages_done, pages_final):
+    """Create simple reports in log file.
 
-	filepath = os.path.join(pathtologs, "log-%s.txt") % (timestamp)
-	with open(filepath, "a") as f:
-		f.write(report)
-	return
+    :param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
+    :param pages_new: list of page numbers matching "NEW" status.
+    :param pages_inprogress: list of page numbers matching "IN PROGRESS" status.
+    :param pages_done: list of page numbers matching "DONE" status.
+    :param pages_final: list of page numbers matching "FINAL" status.
+    :param error_log: message on server errors, can be empty string.
+    :type data: dictionary
+    :type pages_new: list
+    :type pages_inprogress: list
+    :type pages_final: list
+    :type error_log: string
+    """
+    data = data["md"]
+    nr_of_pages = data["nrOfPages"]
+    title = data["title"]
+    nr_of_new = data["nrOfNew"]
+    nr_of_inprogress = data["nrOfInProgress"]
+    nr_of_done = data["nrOfDone"]
+    nr_of_final = data["nrOfFinal"]
+
+    report_pages = "\nDocument '%s' contains %s pages.\n" % (title, nr_of_pages)
+    report_status = "New: %s\nIn Progress: %s\nDone: %s\nFinal:%s\n" % (nr_of_new, nr_of_inprogress, nr_of_done, nr_of_final)
+    report_which_pages = ""
+    if len(pages_new) != 0:
+        pages_new = str(pages_new).strip('[]')
+        report_which_pages += "Following pages have status 'NEW': %s\n" % pages_new
+    if len(pages_inprogress) != 0:
+        pages_inprogress = str(pages_inprogress).strip('[]')
+        report_which_pages += "Following pages have status 'IN PROGRESS': %s\n" % pages_inprogress
+    if len(pages_done) != 0:
+        pages_done = str(pages_done).strip("[]")
+        report_which_pages += "Following pages have status 'DONE': %s\n" % pages_done
+    if len(pages_final) != 0:
+        pages_final = str(pages_final).strip("[]")
+        report_which_pages += "Following pages have status 'FINAL': %s\n" % pages_final
+
+    report = report_pages + report_status + report_which_pages + error_log
+
+    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    with open(path_to_file, "a") as f:
+        f.write(report)
+
 
 # ------- CREATE FILES ------
 
-def createtranscript(url, pagenr, pathtodoc):
-	"""Create a new xml file containing the transcript given by Transkribus for a page, in PAGE standard. 
-	File is name after corresponding page number.
-	:param url: string
-	:param pagenr: integer
-	:param pathtodoc: string
-	:return: boolean
-	"""
-	response = requests.request("GET", url)
-	if response.status_code == 503:
-		error = True
-	else:
-		error = False
-		xml = response.text
-		filepath = os.path.join(pathtodoc, "%s.xml") % (pagenr)
-		soup = BeautifulSoup(xml, "xml")
-		# Adding namespace declaration for element added by Time Us project
-		# Adding attributes to Page elements : @timeUs:url and @itmeUs:id
-		if soup.PcGts:
-			soup.PcGts["xmlns:tu"] = "timeUs"
-			soup.Page["tu:url"] = url
-			soup.Page["tu:id"] = pagenr
-			with open(filepath, "w") as f:
-				f.write(str(soup))
-	return error
+def create_transcript(url, page_nb, path_to_doc):
+    """Create xml file containing a page transcript from Transkribus, in PAGE standard. File is name after
+    corresponding page number.
+
+    :param url: url to request transcript, provided by Transkribus.
+    :param page_nb: current page number.
+    :param path_to_doc: path to directory for the current document/subcollection.
+    :type url: string
+    :type page_nb: integer
+    :type path_to_doc: string
+    :return: a status to signal possible server errors.
+    :rtype: boolean
+    """
+    response = requests.request("GET", url)
+    if response.status_code == 503:
+        error = True
+    else:
+        error = False
+        xml = response.text
+        path_to_file = os.path.join(path_to_doc, "%s.xml") % page_nb
+        soup = BeautifulSoup(xml, "xml")
+        # Adding namespace declaration for element added by Time Us project
+        # Adding attributes to Page elements : @timeUs:url and @itmeUs:id
+        if soup.PcGts:
+            soup.PcGts["xmlns:tu"] = "timeUs"
+            soup.Page["tu:url"] = url
+            soup.Page["tu:id"] = page_nb
+            with open(path_to_file, "w") as f:
+                f.write(str(soup))
+    return error
 
 
-def gettranscripts(data, pathtodoc):
-	""" Identify page transcripts matching targeted status
-	:param data: dict
-	:param pathtodoc: string
-	:return: integer
-	"""
-	pagesnew = []
-	pagesinprogress = []
-	pagesdone = []
-	pagesfinal = []
-	errors = 0
+def get_transcripts(data, path_to_doc):
+    """Identify page numbers matching targeted status.
 
-	pagelist = data["pageList"]["pages"]
-	# Reporting
-	print("Creating xml files for %s" % (data["md"]["title"]))
+    :param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
+    :param path_to_doc: path to directory for the current document/subcollection.
+    :type data: dictionary
+    :type path_to_doc: string
+    :return: sum of all signals of server errors on pages in current document/subcollection.
+    :rtype: integer
+    """
+    pages_new = []
+    pages_inprogress = []
+    pages_done = []
+    pages_final = []
+    errors = 0
 
-	for page in pagelist:
-		match = False
-		latesttranscript = page["tsList"]["transcripts"][0]
-		for stat in status:
-			if latesttranscript["status"] == stat:
-				match = True
-		if match is True:
-			url = latesttranscript["url"]
-			pagenr = latesttranscript["pageNr"]
-			pagestat = latesttranscript["status"]
-			error = createtranscript(url, pagenr, pathtodoc)
-			if error is True:
-				errors += 1
+    page_list = data["pageList"]["pages"]
+    # Reporting
+    print("Creating xml files for %s" % (data["md"]["title"]))
 
-			if pagestat == "NEW":
-				pagesnew.append(pagenr)
-			elif pagestat == "IN PROGRESS":
-				pagesinprogress.append(pagenr)
-			elif pagestat == "DONE":
-				pagesdone.append(pagenr)
-			elif pagestat == "FINAL":
-				pagesfinal.append(pagenr)
+    for page in page_list:
+        match = False
+        latest_transcript = page["tsList"]["transcripts"][0]
+        for stat in status:
+            if latest_transcript["status"] == stat:
+                match = True
+        if match is True:
+            url = latest_transcript["url"]
+            page_nb = latest_transcript["pageNr"]
+            page_stat = latest_transcript["status"]
+            error = create_transcript(url, page_nb, path_to_doc)
+            if error is True:
+                errors += 1
+            if page_stat == "NEW":
+                pages_new.append(page_nb)
+            elif page_stat == "IN PROGRESS":
+                pages_inprogress.append(page_nb)
+            elif page_stat == "DONE":
+                pages_done.append(page_nb)
+            elif page_stat == "FINAL":
+                pages_final.append(page_nb)
+    if errors == 0:
+        error_log = "\n"
+    else:
+        error_log = "%s server error(s) while retreiving xml files.\n" % errors
+    create_log_entry(data, error_log, pages_new, pages_inprogress, pages_done, pages_final)
+    return errors
 
-	if errors == 0:
-		errorlog = "\n"
-	else:
-		errorlog = "%s server error(s) while retreiving xml files.\n" % (errors)
-	createLogEntry(data, errorlog, pagesnew, pagesinprogress, pagesdone, pagesfinal)
-	return errors
 
+def get_metadata(data):
+    """Create JSON file containing document/subcollection's metadata in collection's directory.
 
-def getmetadata(data):
-	"""Create a new json file containing the document's metadata in the corresponding folder
-	:param data: dict (json file)
-	:return: string
-	"""
-	metadata = data["md"]
-	docid = metadata["docId"]
-	documenttitle = metadata["title"]
-	documenttitle = documenttitle.replace("/", "-")
-	pathtodoc = os.path.join(pathtocol, "%s - %s") % (docid, documenttitle)
-
-	# Reporting
-	#print("Creating new folder in data/%s/ for document %s, if does not already exist." % (collectionname, documenttitle))
-	createFolder(pathtodoc)
-
-	# Create metadata.json file for document
-	filepath = os.path.join(pathtodoc, "metadata.json")
-	with open (filepath, 'w') as file:
-		text = json.dumps(metadata)
-		file.write(text)
-	return pathtodoc
+    :param data: contains all data retrieved from requesting Transkribus API on a collection's documents/subcollections.
+    :type data: dictionary
+    :return: path to directory for the current document/subcollection.
+    :rtype: string
+    """
+    metadata = data["md"]
+    document_id = metadata["docId"]
+    document_title = metadata["title"]
+    document_title = document_title.replace("/", "-")
+    path_to_doc = os.path.join(path_to_col, "%s - %s") % (document_id, document_title)
+    create_folder(path_to_doc)
+    # Create metadata.json file for document
+    path_to_file = os.path.join(path_to_doc, "metadata.json")
+    with open(path_to_file, 'w') as file:
+        text = json.dumps(metadata)
+        file.write(text)
+    return path_to_doc
 
 
 # ------- REQUESTS ------- 
-def getsessionid():
-	"""Use Transkribus API login tools and returns a session code
-	:return: string
-	"""
-	url = "https://transkribus.eu/TrpServer/rest/auth/login"
-	payload = 'user=' + username + '&' + 'pw=' + password
-	headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-	response = requests.request("POST", url, data=payload, headers=headers)
+def get_session_id():
+    """Request Transkribus API to authenticate.
 
-	try:
-		soup = BeautifulSoup(response.text, "xml")
-		sessionid = soup.sessionId.string
-		# Reporting
-		print("Successfully connected; session ID: %s." % (sessionid))
-	except Exception as e:
-		print("Connection failed.")
-		print(e)
-	return sessionid
+    :return: session id for authentication.
+    :rtype: string
+    """
+    url = "https://transkribus.eu/TrpServer/rest/auth/login"
+    payload = 'user=' + username + '&' + 'pw=' + password
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.request("POST", url, data=payload, headers=headers)
 
-
-def getcollectionid(sessionid):
-	""" Use Trankribus API to list collections accessible on the session and retrieve the ID of the targeted collection and rertuns that ID
-	:param sessionid: string
-	:return: string
-	"""
-	url = "https://transkribus.eu/TrpServer/rest/collections/list"
-	querystring = {"JSESSIONID":sessionid}
-	response = requests.request("GET", url, params=querystring)
-	json_file = json.loads(response.text)
-
-	collectionid = ''
-
-	for collection in json_file:
-		name = collection['colName'] 
-		if name == collectionname:
-			collectionid = collection['colId']
-
-	# Reporting 
-	if not collectionid:
-		print('Verify targeted collection name or user\'s rights, no collection named %s!' % (collectionname))
-	else:
-		print("Found %s; ID: %s." % (collectionname, collectionid))
-	return collectionid
+    try:
+        soup = BeautifulSoup(response.text, "xml")
+        session_id = soup.sessionId.string
+        # Reporting
+        print("Successfully connected; session ID: %s." % session_id)
+    except Exception as e:
+        print(e)
+        print("Connection failed.")
+        session_id = None
+    return session_id
 
 
-def getdocumentid(sessionid, collectionid):
-	""" Use Transkribus API to get a list of document ID in the targeted collection and returns that list
-	:param sessionid: string
-	:param collectionid: string
-	:return: list
-	"""
-	url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % (collectionid)
-	querystring = {"JSESSIONID":sessionid}
-	response = requests.request("GET", url, params=querystring)
-	json_file = json.loads(response.text)
+def get_collection_id(session_id):
+    """Request Trankribus API to list collections accessible for current user and retrieve id of targeted collection.
 
-	doclist = []
+    :param session_id: session id for authentication.
+    :type session_id: string
+    :return: numerical id for targeted collection.
+    :rtype: integer
+    """
+    url = "https://transkribus.eu/TrpServer/rest/collections/list"
+    querystring = {"JSESSIONID": session_id}
+    response = requests.request("GET", url, params=querystring)
+    json_file = json.loads(response.text)
 
-	for document in json_file:
-		docId = document["docId"]
-		doclist.append(docId)
+    collection_id = ''
+    for collection in json_file:
+        if collection['colName'] == collection_name:
+            collection_id = collection['colId']
 
-	# Reporting
-	idreport = ", ".join(map(str, doclist))
-	print("Found following document IDs in '%s' collection: %s." % (collectionname, idreport))
-	return doclist
+    # Reporting
+    if not collection_id:
+        print('Verify targeted collection name or user\'s rights, no collection named %s!' % collection_name)
+    else:
+        print("Found %s; ID: %s." % (collection_name, collection_id))
+    return collection_id
 
-def getdocumentpages(sessionid, collectionid, documentid):
-	""" Use Transkribus API to get a json file with metadata and transcriptions, alos keep track of server errors for report
-	:param sessionid: string
-	:param collectionid: string
-	:param documentid: string
-	:return: integer
-	"""
-	totalerrors = 0
-	url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" %(collectionid, documentid)
-	querystring = {"JSESSIONID":sessionid}
-	response = requests.request("GET", url, params=querystring)
-	json_file = json.loads(response.text)
 
-	# Get metadata and create metadata file and log
-	pathtodoc = getmetadata(json_file)
-	errors = gettranscripts(json_file, pathtodoc)
-	totalerrors += errors
-	return totalerrors
+def get_document_id(session_id, collection_id):
+    """Request Transkribus API to list documents/subcollections in targeted collection.
+
+    :param session_id: session id for authentication.
+    :param collection_id: numerical id for targeted collection.
+    :type session_id: string
+    :type collection_id: integer
+    :return: list of numerical id for documents/subcollections in targeted collection.
+    :rtype: list
+    """
+    url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % collection_id
+    querystring = {"JSESSIONID": session_id}
+    response = requests.request("GET", url, params=querystring)
+    json_file = json.loads(response.text)
+    document_list = [document["docId"] for document in json_file]
+
+    # Reporting
+    id_list = ", ".join(map(str, document_list))
+    print("Found following document IDs in '%s' collection: %s." % (collection_name, id_list))
+    return document_list
+
+
+def get_document_pages(session_id, collection_id, document_id):
+    """Request Transkribus API to get document/subcollection's metadata.
+
+    :param session_id: session id for authentication.
+    :param collection_id: numerical id for targeted collection.
+    :param document_id: numerical id for document/subcollection in targeted collection.
+    :type session_id: string
+    :type collection_id: integer
+    :type document_id: integer
+    :return: sum of all signals of server errors for current document/subcollection.
+    :rtype: integer
+    """
+    total_errors = 0
+    url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" % (collection_id, document_id)
+    querystring = {"JSESSIONID": session_id}
+    response = requests.request("GET", url, params=querystring)
+    json_file = json.loads(response.text)
+
+    # Get metadata and create metadata file and log
+    path_to_doc = get_metadata(json_file)
+    errors = get_transcripts(json_file, path_to_doc)
+    total_errors += errors
+    return total_errors
 
 
 # ======================= #
 
 now = datetime.datetime.now()
-timestamp = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
+TIMESTAMP = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
 
-verifystatus = []
+invalid_status = []
 for stat in status:
-	if not (stat == "NEW" or stat == "IN PROGRESS" or stat == "DONE" or stat == "FINAL"):
-		print("Warning! %s is not a valid satus" % (stat))
-		verifystatus.append(stat)
-if len(verifystatus) > 0:
-	for wrong in verifystatus:
-		status.remove(wrong)
-	if len(status) > 0:
-		strstatus = str(status).strip('[]')
-		print("Working with valid status: %s" % (strstatus))
+    if not (stat == "NEW" or stat == "IN PROGRESS" or stat == "DONE" or stat == "FINAL"):
+        print("Warning! %s is not a valid satus" % stat)
+        invalid_status.append(stat)
+if len(invalid_status) > 0:
+    [status.remove(wrong) for wrong in invalid_status]
+    if len(status) > 0:
+        print("Working with valid status: %s" % (str(status).strip('[]')))
 
 if len(status) > 0:
-	currentdirectory = os.path.dirname(os.path.abspath(__file__))
-	pathtodata = os.path.join(currentdirectory, "data")
-	pathtologs = os.path.join(currentdirectory, "__logs__")
-	sessionid = getsessionid()
-	initiateLog()
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    path_to_data = os.path.join(cwd, "data")
+    path_to_logs = os.path.join(cwd, "__logs__")
+    session_id = get_session_id()
+    if session_id:
+        initiate_log()
 
-	for collectionname in collectionnames:
-		pathtocol = os.path.join(pathtodata, collectionname)
-		
-		collectionid = getcollectionid(sessionid)
-		totalerrors = 0
-		if collectionid:
-			listofdocumentid = getdocumentid(sessionid, collectionid)
-			print("Creating new folder in data/ for %s collection if does not already exist." % (collectionname))
-			createFolder(pathtocol)
-			
-			for documentid in listofdocumentid:
-				errors = getdocumentpages(sessionid, collectionid, documentid)
-				totalerrors += errors
-			if totalerrors != 0:
-				print("Warning! %s server error(s) while retrieving xml files!" % (totalerrors))
-			createSeparationInLog()
+        for collection_name in collection_list:
+            path_to_col = os.path.join(path_to_data, collection_name)
+
+            collection_id = get_collection_id(session_id)
+            total_errors = 0
+            if collection_id:
+                list_of_document_id = get_document_id(session_id, collection_id)
+                print("Creating new folder in data/ for %s collection if does not already exist." % collection_name)
+                create_folder(path_to_col)
+
+                for document_id in list_of_document_id:
+                    errors = get_document_pages(session_id, collection_id, document_id)
+                    total_errors += errors
+                if total_errors != 0:
+                    print("Warning! %s server error(s) while retrieving xml files!" % total_errors)
+                create_separation_in_log()
 else:
-	print("No valid status to work with.")
-
-
+    print("No valid status to work with.")
