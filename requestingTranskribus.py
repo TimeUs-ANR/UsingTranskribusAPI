@@ -118,12 +118,16 @@ def create_transcript(url_transcript, url_image, page_nb, path_to_doc, document_
     response = requests.request("GET", url_transcript)
     document_title = "<title>%s</title>" % document_title
     document_desc = "<desc>%s</desc>" % document_desc
+    document_page_nb = "<pagenumber>%s</pagenumber>" % page_nb
     tag_title = BeautifulSoup(document_title, "xml")
     tag_desc = BeautifulSoup(document_desc, "xml")
+    tag_page_nb = BeautifulSoup(document_page_nb, "xml")
     tag_title = tag_title.title.extract()
     tag_desc = tag_desc.desc.extract()
+    tag_page_nb = tag_page_nb.pagenumber.extract()
     tag_title.name = "tu:title"
     tag_desc.name = "tu:desc"
+    tag_page_nb.name = "tu:pagenumber"
     if len(document_lang) != 0:
         document_lang = ''.join(["<language>%s</language>" % l.strip() for l in document_lang.split(",")])
         document_lang = "<languages>%s</languages>" % document_lang
@@ -148,6 +152,7 @@ def create_transcript(url_transcript, url_image, page_nb, path_to_doc, document_
             soup.Page["tu:id"] = page_nb
             soup.Metadata.append(tag_title)
             soup.Metadata.append(tag_desc)
+            soup.Metadata.append(tag_page_nb)
             if len(document_lang) != 0:
                 for tag in tag_lang_list:
                     soup.Metadata.append(tag)
