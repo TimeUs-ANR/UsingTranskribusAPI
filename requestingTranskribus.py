@@ -94,20 +94,45 @@ def create_log_entry(data, error_log, pages_new, pages_inprogress, pages_done, p
 
 # ------- CREATE FILES ------
 
-def create_transcript(url, page_nb, path_to_doc):
+def create_transcript(url_transcript, url_image, page_nb, path_to_doc, document_title, document_desc, document_lang):
     """Create xml file containing a page transcript from Transkribus, in PAGE standard. File is name after
     corresponding page number.
 
-    :param url: url to request transcript, provided by Transkribus.
+    :param url_transcript: url to request transcript, provided by Transkribus.
+    :param url_image: url to request image of current document/subcollection page.
     :param page_nb: current page number.
     :param path_to_doc: path to directory for the current document/subcollection.
-    :type url: string
+    :param document_title: title of current document/subcollection.
+    :param document_desc: description of current document/subcollection.
+    :param document_lang: list of languages for current document/subcollection, separated by commas.
+    :type url_transcript: string
+    :type url_image: string
     :type page_nb: integer
     :type path_to_doc: string
+    :type document_title: string
+    :type document_desc: string
+    :type document_lang: string
     :return: a status to signal possible server errors.
     :rtype: boolean
     """
-    response = requests.request("GET", url)
+    response = requests.request("GET", url_transcript)
+    document_title = "<title>%s</title>" % document_title
+    document_desc = "<desc>%s</desc>" % document_desc
+    tag_title = BeautifulSoup(document_title, "xml")
+    tag_desc = BeautifulSoup(document_desc, "xml")
+    tag_title = tag_title.title.extract()
+    tag_desc = tag_desc.desc.extract()
+    tag_title.name = "tu:title"
+    tag_desc.name = "tu:desc"
+    if len(document_lang) != 0:
+        document_lang = ''.join(["<language>%s</language>" % l.strip() for l in document_lang.split(",")])
+        document_lang = "<languages>%s</languages>" % document_lang
+        tag_languages = BeautifulSoup(document_lang, "xml")
+        tag_languages = tag_languages.languages.extract()
+        tag_lang_list = tag_languages.findAll("language")
+        for tag in tag_lang_list:
+            tag.name = "tu:language"
+
     if response.status_code == 503:
         error = True
     else:
@@ -116,11 +141,16 @@ def create_transcript(url, page_nb, path_to_doc):
         path_to_file = os.path.join(path_to_doc, "%s.xml") % page_nb
         soup = BeautifulSoup(xml, "xml")
         # Adding namespace declaration for element added by Time Us project
-        # Adding attributes to Page elements : @timeUs:url and @itmeUs:id
+        # Adding attributes to Page elements : @timeUs:url and @timeUs:id
         if soup.PcGts:
             soup.PcGts["xmlns:tu"] = "timeUs"
-            soup.Page["tu:url"] = url
+            soup.Page["tu:url"] = url_image
             soup.Page["tu:id"] = page_nb
+            soup.Metadata.append(tag_title)
+            soup.Metadata.append(tag_desc)
+            if len(document_lang) != 0:
+                for tag in tag_lang_list:
+                    soup.Metadata.append(tag)
             with open(path_to_file, "w") as f:
                 f.write(str(soup))
     return error
@@ -143,8 +173,17 @@ def get_transcripts(data, path_to_doc):
     errors = 0
 
     page_list = data["pageList"]["pages"]
+    document_title = data["md"]["title"]
+    if "desc" in data["md"]:
+        document_desc = data["md"]["desc"]
+    else:
+        document_desc = "No description."
+    if "language" in data["md"]:
+        document_lang = data["md"]["language"]
+    else:
+        document_lang = ""
     # Reporting
-    print("Creating xml files for %s" % (data["md"]["title"]))
+    print("Creating xml files for %s" % document_title)
 
     for page in page_list:
         match = False
@@ -153,10 +192,11 @@ def get_transcripts(data, path_to_doc):
             if latest_transcript["status"] == stat:
                 match = True
         if match is True:
-            url = latest_transcript["url"]
+            url_transcript = latest_transcript["url"]
+            url_image = page["url"]
             page_nb = latest_transcript["pageNr"]
             page_stat = latest_transcript["status"]
-            error = create_transcript(url, page_nb, path_to_doc)
+            error = create_transcript(url_transcript, url_image, page_nb, path_to_doc, document_title, document_desc, document_lang)
             if error is True:
                 errors += 1
             if page_stat == "NEW":
