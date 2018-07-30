@@ -18,7 +18,7 @@ def initiate_log():
     """Initiate a log file in __logs__ directory, name after a timestamp.
     """
     collist = ' '.join(["'%s'" % collection for collection in collection_list])
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-text-%s.txt") % TIMESTAMP
     intro = """
     TRANSFORMING XML FILES (PAGE FORMAT) TO TEXT FILES
 
@@ -49,7 +49,7 @@ def create_log(xml_counter, page_counter, document):
             log = log + "\tNo .xml file matched PAGE format (root must be '<PcGts>'.\n\n"
         else:
             log = log + "\tFound %s .xml file(s) matching PAGE format.\n\n" % page_counter
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-text-%s.txt") % TIMESTAMP
     with open(path_to_file, "a") as f:
         f.write(log)
 

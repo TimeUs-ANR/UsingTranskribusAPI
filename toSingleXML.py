@@ -18,7 +18,7 @@ def initiate_log():
     """Initiate a log file in __logs__ directory, name after a timestamp.
     """
     collist = ' '.join(["'%s'" % collection for collection in collection_list])
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-single-%s.txt") % TIMESTAMP
     intro = """
     BUILDING SINGLE XML DOCUMENT(PAGE FORMAT) FROM MULTIPLE XML FILES
     
@@ -37,7 +37,7 @@ def create_log(log):
     :param log: report identifying mashed up files.
     :type log: string
     """
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-single-%s.txt") % TIMESTAMP
     with open(path_to_file, "a") as f:
         f.write(log)
 

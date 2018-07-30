@@ -24,7 +24,7 @@ def initiate_log():
     """Initiate a log file in __logs__ directory, name after a timestamp.
     """
     collections = ' '.join(["'%s'" % collection for collection in collection_list])
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-req-%s.txt") % TIMESTAMP
     intro = """
     RETRIEVING PAGE-XML FILES AND METADATA FROM TRANSKRIBUS
 
@@ -40,7 +40,7 @@ def initiate_log():
 def create_separation_in_log():
     """Create a visual separation in log file.
     """
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-req-%s.txt") % TIMESTAMP
     separation = "\n =================================================== \n\n"
     with open(path_to_file, "a") as f:
         f.write(separation)
@@ -87,7 +87,7 @@ def create_log_entry(data, error_log, pages_new, pages_inprogress, pages_done, p
 
     report = report_pages + report_status + report_which_pages + error_log
 
-    path_to_file = os.path.join(path_to_logs, "log-%s.txt") % TIMESTAMP
+    path_to_file = os.path.join(path_to_logs, "log-req-%s.txt") % TIMESTAMP
     with open(path_to_file, "a") as f:
         f.write(report)
 
